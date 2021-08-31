@@ -1,0 +1,9 @@
+<launch>
+  <rosparam command="load" file="$(find rovi_sim)/test/config.yaml" />
+  <node pkg="rovi_sim" type="vstacker.py" name="" output="screen" />
+  <node pkg="rovi" type="floats2pc" name="" args="world">
+    <remap from="floats" to="/rovi/wp_floats" />
+    <remap from="pc" to="/rsim/scene" />
+  </node>
+  <node pkg="rovi_sim" type="vcam.py" name="" output="screen" />
+</launch>

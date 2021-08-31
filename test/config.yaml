@@ -1,0 +1,13 @@
+config:
+  vstacker:
+    model: test/shaft.ply
+    layers: 3
+    dmin: 100
+    range_x: 50
+    range_y: 1000
+  vcam:
+    trim_y: 300
+    trim_x: 1000
+    frame_id: camera
+
+

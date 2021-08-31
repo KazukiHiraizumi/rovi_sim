@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rovi_sim</name>
+  <version>1.0.0</version>
+  <description>ROVI Simulator</description>
+
+  <maintainer email="ca-giken@c-able.ne.jp">KazukiHiraizumi</maintainer>
+  <license>BSD</license>
+  <url type="website">http://github.com/KazukiHiraizumi/rtk_tools</url>
+  <author email="ca-giken@c-able.ne.jp">KazukiHiraizumi</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rovi</depend>
+  <depend>rovi_utils</depend>
+</package>
