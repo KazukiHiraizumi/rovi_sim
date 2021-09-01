@@ -73,8 +73,8 @@ def alayer(base,offset):
 def RT(cod):
   tr=np.eye(4)
   tr[:,3]=np.append(cod,[1]).T
-  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
-  tr[:3,:3]=R.as_matrix()
+#  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
+#  tr[:3,:3]=R.as_matrix()
   return tr
 
 def place():
@@ -87,29 +87,40 @@ def place():
     layout.append(l)
   return layout
 
-def mkscene(pcd,tfs):
-  scn=np.reshape(np.asarray(pcd.points),(-1,3))
-  for layer in tfs:
-    for tr in layer:
+def mkscene(pcd,tfs,fls):
+  scn=np.asarray([]).reshape((-1,3))
+  for layer in zip(tfs,fls):
+    for n,tr in enumerate(layer[0]):
+      if not layer[1][n]: continue
       p=copy.deepcopy(pcd)
       p.transform(tr)
       pn=np.array(p.points)
       scn=np.vstack((scn,pn))
   return scn
 
+def mkbools(tfs):
+  bs=[]
+  for layer in tfs:
+    bs.append(np.ones(len(layer),dtype=bool))
+  return bs
+
 def cb_redraw(msg):
   pub_wp.publish(np2F(scenePn))
 
 def cb_place(msg):
-  global sceneTf,scenePn
+  global sceneTf,scenePn,sceneXO
   while True:
     sceneTf=place()
     if sceneTf is not None: break
   print("sceneTf",sceneTf)
-  print("PLY file",thispath+'/'+Config['model'])
+  sceneXO=mkbools(sceneTf)
+  txo=np.random.rand(len(sceneXO.pop(-1)))<np.random.rand()
+  if np.sum(txo)==0: txo[0]=True
+  sceneXO.append(txo)
+  print("sceneXO",sceneXO)
   pcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
   print("PLY",len(pcd.points))
-  scenePn=mkscene(pcd,sceneTf)
+  scenePn=mkscene(pcd,sceneTf,sceneXO)
   cb_redraw(0)
 
 def cb_place1(msg):
@@ -118,7 +129,7 @@ def cb_place1(msg):
   print("sceneTf",sceneTf)
   pcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
   print("PLY",len(pcd.points))
-  scenePn=mkscene(pcd,sceneTf)
+  scenePn=mkscene(pcd,sceneTf,[[True]])
   cb_redraw(0)
 
 def parse_argv(argv):

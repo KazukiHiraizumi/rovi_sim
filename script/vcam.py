@@ -19,7 +19,10 @@ Config={
   "source_frame_id":"world",
   "target_frame_id":"camera",
   "trim_x":1000,
-  "trim_y":300
+  "trim_y":300,
+  "view_x":[-200,200],
+  "ladle_z":200,
+  "radius":100000
 }
 
 def np2F(d):  #numpy to Floats
@@ -43,11 +46,27 @@ def cb_ps(msg):
   return
 
 def cb_capture(msg):
+  try:
+    Config.update(rospy.get_param("/config/vcam"))
+  except Exception as e:
+    print("get_param exception:",e.args)
   RT=getRT(Config["source_frame_id"],Config["target_frame_id"])
-  print("vcam TF",RT)
   scn_1=np.vstack((Scene.T,np.ones(len(Scene))))
-  scn_1=RT.dot(scn_1).T
-  pub_ps.publish(np2F(scn_1[:,:3]))
+  scn_1=RT.dot(scn_1)
+  print("scn1",scn_1.shape)
+  scn=scn_1[:3].T
+  scn=scn[np.abs(np.ravel(scn_1[1]))<Config["trim_y"]/2]
+  zp=np.ravel(scn.T[2])
+  scn=scn[zp-np.min(zp)<Config["ladle_z"]]
+  pub_ps.publish(np2F(scn))
+#  pcd=o3d.geometry.PointCloud()
+#  pcd.points=o3d.utility.Vector3dVector(scn)
+#  diameter=np.linalg.norm(np.asarray(pcd.get_max_bound())-np.asarray(pcd.get_min_bound()))
+#  _, pt_map0=pcd.hidden_point_removal([Config["view_x"][0],0,0],Config["radius"])
+#  _, pt_map1=pcd.hidden_point_removal([Config["view_x"][1],0,0],Config["radius"])
+#  pt_map=list(set(pt_map0).union(pt_map1))
+#  pcd=pcd.select_by_index(pt_map)
+#  pub_ps.publish(np2F(np.array(pcd.points)))
 
 ########################################################
 rospy.init_node("vcam",anonymous=True)
