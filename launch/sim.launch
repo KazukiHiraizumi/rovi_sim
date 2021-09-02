@@ -1,5 +1,5 @@
 <launch>
-  <rosparam command="load" file="$(find rovi_sim)/test/config.yaml" />
+  <rosparam command="load" file="$(find rovi_sim)/config.yaml" />
   <node pkg="rovi_sim" type="vstacker.py" name="" output="screen" />
   <node pkg="rovi" type="floats2pc" name="" args="world">
     <remap from="floats" to="/rovi/wp_floats" />

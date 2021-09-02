@@ -9,6 +9,7 @@ import open3d as o3d
 import os
 import sys
 import subprocess
+import copy
 from rovi.msg import Floats
 from rospy.numpy_msg import numpy_msg
 from std_msgs.msg import Bool
@@ -18,11 +19,11 @@ from rovi_utils import tflib
 Config={
   "source_frame_id":"world",
   "target_frame_id":"camera",
-  "trim_x":1000,
+  "trim_x":800,
   "trim_y":300,
-  "view_x":[-200,200],
-  "ladle_z":200,
-  "radius":100000
+  "trim_far":600,
+  "trim_near":300,
+  "ladle":40
 }
 
 def np2F(d):  #numpy to Floats
@@ -45,27 +46,55 @@ def cb_ps(msg):
   print("vcam sub scene",Scene.shape)
   return
 
+def cb_knn(pcd_tree,pcd,i):
+  [k, idx, _]=pcd_tree.search_knn_vector_3d(pcd.points[i],Config["knn_k"])
+#  [k, idx, _]=pcd_tree.search_radius_vector_3dpcd.points[i],Config["knn_r"])
+  return idx
+
+def slicey(pcd):
+  psum=np.array([]).reshape((-1,3))
+  asum=0
+  for x in np.arange(-0.5,0.5,0.01)*Config["trim_x"]:
+    px=pcd[np.ravel(np.abs(pcd.T[0]-x)<=0.005*Config["trim_x"])]
+    if len(px)==0: continue
+#    print("xslice",px.shape)
+    for y in np.arange(-0.5,0.5,0.01)*Config["trim_y"]:
+      pcy=np.array(px)
+      py=pcy[np.ravel(np.abs(pcy.T[1]-y)<=0.005*Config["trim_y"])]
+#      print("yslice",py.shape)
+      if len(py)==0: continue
+      minz=np.min(py.T[2])
+      pp=py[np.ravel(py.T[2]<minz+Config["ladle"])]
+#      print("pslice",pp.shape)
+      psum=np.vstack((psum,pp))
+      asum=asum+len(py)
+  print("vcam points",asum,psum.shape)
+  return psum
+
 def cb_capture(msg):
   try:
     Config.update(rospy.get_param("/config/vcam"))
   except Exception as e:
     print("get_param exception:",e.args)
-  RT=getRT(Config["source_frame_id"],Config["target_frame_id"])
+  RT=getRT(Config["target_frame_id"],Config["source_frame_id"])
   scn_1=np.vstack((Scene.T,np.ones(len(Scene))))
   scn_1=RT.dot(scn_1)
-  print("scn1",scn_1.shape)
   scn=scn_1[:3].T
   scn=scn[np.abs(np.ravel(scn_1[1]))<Config["trim_y"]/2]
   zp=np.ravel(scn.T[2])
-  scn=scn[zp-np.min(zp)<Config["ladle_z"]]
-  pub_ps.publish(np2F(scn))
+  scn=scn[zp<Config["trim_far"]]
+  print("vcam trimmed",scn.shape)
+  sc2=slicey(scn)
+  pub_ps.publish(np2F(np.array(sc2)))
 #  pcd=o3d.geometry.PointCloud()
 #  pcd.points=o3d.utility.Vector3dVector(scn)
-#  diameter=np.linalg.norm(np.asarray(pcd.get_max_bound())-np.asarray(pcd.get_min_bound()))
-#  _, pt_map0=pcd.hidden_point_removal([Config["view_x"][0],0,0],Config["radius"])
-#  _, pt_map1=pcd.hidden_point_removal([Config["view_x"][1],0,0],Config["radius"])
-#  pt_map=list(set(pt_map0).union(pt_map1))
-#  pcd=pcd.select_by_index(pt_map)
+#  pset=set([])
+#  vs=(np.random.rand(Config["view_n"],3)-0.5)*np.array(Config["view"])np.array(Config["view_ofs"])
+#  for v in vs:
+#    _, pm=pcd.hidden_point_removal(v,Config["view_r"])
+#    pset=pset.union(set(pm))
+#  plst=np.array(list(pset))
+#  pcd=pcd.select_by_index(plst)
 #  pub_ps.publish(np2F(np.array(pcd.points)))
 
 ########################################################
