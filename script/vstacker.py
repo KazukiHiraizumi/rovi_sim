@@ -8,6 +8,8 @@ import copy
 import open3d as o3d
 import roslib
 import rospy
+import tf
+import tf2_ros
 from scipy.spatial.transform import Rotation as rot
 from rovi.msg import Floats
 from rospy.numpy_msg import numpy_msg
@@ -132,6 +134,13 @@ def cb_place1(msg):
   scenePn=mkscene(pcd,sceneTf,[[True]])
   cb_redraw(0)
 
+def cb_pick1(msg):
+  pass
+def cb_pick2(msg):
+  pass
+def cb_pick3(msg):
+  pass
+
 def parse_argv(argv):
   args={}
   for arg in argv:
@@ -156,8 +165,14 @@ except Exception as e:
 ###Topics
 rospy.Subscriber("/rsim/place",Bool,cb_place)
 rospy.Subscriber("/rsim/place1",Bool,cb_place1)
+rospy.Subscriber("/rsim/pick1",Bool,cb_pick1)
+rospy.Subscriber("/rsim/pick2",Bool,cb_pick2)
+rospy.Subscriber("/rsim/pick3",Bool,cb_pick3)
 rospy.Subscriber("/request/redraw",Bool,cb_redraw)
 pub_wp=rospy.Publisher("/rovi/wp_floats",numpy_msg(Floats),queue_size=1)
+###TF
+tfBuffer=tf2_ros.Buffer()
+listener=tf2_ros.TransformListener(tfBuffer)
 
 #if __name__=="__main__":
 #

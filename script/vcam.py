@@ -23,6 +23,9 @@ Config={
   "trim_y":300,
   "trim_far":600,
   "trim_near":300,
+  "view":[[-300,0,0],[0,0,0],[300,0,0]],
+  "view_r":50000,
+  "mesh":5,
   "ladle":40
 }
 
@@ -54,13 +57,13 @@ def cb_knn(pcd_tree,pcd,i):
 def slicey(pcd):
   psum=np.array([]).reshape((-1,3))
   asum=0
-  for x in np.arange(-0.5,0.5,0.01)*Config["trim_x"]:
-    px=pcd[np.ravel(np.abs(pcd.T[0]-x)<=0.005*Config["trim_x"])]
+  for x in np.arange(-Config["trim_x"]/2,Config["trim_x"]/2,Config["mesh"]):
+    px=pcd[np.ravel(np.abs(pcd.T[0]-x)<=Config["mesh"]/2)]
     if len(px)==0: continue
 #    print("xslice",px.shape)
-    for y in np.arange(-0.5,0.5,0.01)*Config["trim_y"]:
+    for y in np.arange(-Config["trim_y"]/2,Config["trim_y"]/2,Config["mesh"]):
       pcy=np.array(px)
-      py=pcy[np.ravel(np.abs(pcy.T[1]-y)<=0.005*Config["trim_y"])]
+      py=pcy[np.ravel(np.abs(pcy.T[1]-y)<=Config["mesh"]/2)]
 #      print("yslice",py.shape)
       if len(py)==0: continue
       minz=np.min(py.T[2])
@@ -84,18 +87,17 @@ def cb_capture(msg):
   zp=np.ravel(scn.T[2])
   scn=scn[zp<Config["trim_far"]]
   print("vcam trimmed",scn.shape)
-  sc2=slicey(scn)
-  pub_ps.publish(np2F(np.array(sc2)))
-#  pcd=o3d.geometry.PointCloud()
-#  pcd.points=o3d.utility.Vector3dVector(scn)
-#  pset=set([])
-#  vs=(np.random.rand(Config["view_n"],3)-0.5)*np.array(Config["view"])np.array(Config["view_ofs"])
-#  for v in vs:
-#    _, pm=pcd.hidden_point_removal(v,Config["view_r"])
-#    pset=pset.union(set(pm))
-#  plst=np.array(list(pset))
-#  pcd=pcd.select_by_index(plst)
-#  pub_ps.publish(np2F(np.array(pcd.points)))
+#  sc2=slicey(scn)
+#  pub_ps.publish(np2F(np.array(sc2)))
+  pcd=o3d.geometry.PointCloud()
+  pcd.points=o3d.utility.Vector3dVector(scn)
+  pset=set([])
+  for v in Config["view"]:
+    _, pm=pcd.hidden_point_removal(v,Config["view_r"])
+    pset=pset.union(set(pm))
+  plst=np.array(list(pset))
+  pcd=pcd.select_by_index(plst)
+  pub_ps.publish(np2F(np.array(pcd.points)))
 
 ########################################################
 rospy.init_node("vcam",anonymous=True)
