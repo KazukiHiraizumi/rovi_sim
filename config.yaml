@@ -1,6 +1,6 @@
 config:
   vstacker:
-    model: test/shaft.ply
+    model: test/shaft_2.ply
     layers: 3
     dmin: 100
     range_x: 50
@@ -9,5 +9,7 @@ config:
     trim_y: 300
     trim_x: 1000
     frame_id: camera
-
-
+  vrobo:
+    org: [0,0,500]
+    step_y: 150
+    step_z: 15

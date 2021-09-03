@@ -14,7 +14,7 @@ config:
       unlit: "#888888"
       mask: "#222222"
     launch_vga:
-      label: "VGAカメラ"
+      label: "シミュレータ"
       package: rovi_sim
       file: sim.launch
       auto: 1

@@ -14,11 +14,12 @@ from scipy.spatial.transform import Rotation as rot
 from rovi.msg import Floats
 from rospy.numpy_msg import numpy_msg
 from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
 Config={
-  "model":"test/shaft.ply",
+  "model":"model.ply",
   "layers":3,
   "dmin":100,
   "range_x":50,
@@ -140,6 +141,9 @@ def cb_pick2(msg):
   pass
 def cb_pick3(msg):
   pass
+def cb_clear(msg):
+  mError.data=0
+  pub_err.publish(mError)
 
 def parse_argv(argv):
   args={}
@@ -168,11 +172,15 @@ rospy.Subscriber("/rsim/place1",Bool,cb_place1)
 rospy.Subscriber("/rsim/pick1",Bool,cb_pick1)
 rospy.Subscriber("/rsim/pick2",Bool,cb_pick2)
 rospy.Subscriber("/rsim/pick3",Bool,cb_pick3)
+rospy.Subscriber("/rsim/clear",Bool,cb_clear)
 rospy.Subscriber("/request/redraw",Bool,cb_redraw)
 pub_wp=rospy.Publisher("/rovi/wp_floats",numpy_msg(Floats),queue_size=1)
+pub_err=rospy.Publisher("/rsim/error",Int32,queue_size=1)
 ###TF
 tfBuffer=tf2_ros.Buffer()
 listener=tf2_ros.TransformListener(tfBuffer)
+###Const
+mError=Int32()
 
 #if __name__=="__main__":
 #

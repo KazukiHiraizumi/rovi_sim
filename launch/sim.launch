@@ -6,4 +6,5 @@
     <remap from="pc" to="/rsim/scene" />
   </node>
   <node pkg="rovi_sim" type="vcam.py" name="" output="screen" />
+  <node pkg="rovi_sim" type="vrobo.py" name="" output="screen" />
 </launch>

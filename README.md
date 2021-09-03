@@ -1,5 +1,16 @@
 # VT simulator  
-## sim_node
+rovi_simはYCAM3D無しで、VT機能を机上でシミュレーションします。
+
+## インストール  
+先にRoVIおよびVTをインストします(https://github.com/YOODS/rovi_visual_teach)。その後このReposをcatkinワークスペースにCloneします。
+
+## 起動  
+~~~
+roslaunch rovi_sim start.launch
+~~~
+または *起動* アイコンをクリック。
+
+## nodeグループ
 ### subscriber
 
 |トピック名|機能|結果|
