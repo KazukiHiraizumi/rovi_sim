@@ -23,7 +23,7 @@
     <remap from="~out/floats" to="/scene/surface/floats" />
     <remap from="~solve" to="/prepro/solve" />
   </node>
-  <node pkg="rovi_utils" type="searcher.py" name="searcher0" args="path:=$(find rovi_visual_teach)/recipe" output="screen">
+  <node pkg="rovi_utils" type="searcher.py" name="searcher0" args="path:=$(find rovi_sim)/recipe" output="screen">
     <remap from="~config" to="/config/searcher0" />
     <remap from="~param" to="/searcher" />
     <remap from="~in/surface/floats" to="/scene/surface/floats" />
