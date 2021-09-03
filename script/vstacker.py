@@ -24,12 +24,24 @@ Config={
   "dmin":100,
   "range_x":50,
   "range_y":1000,
+  "solve_frame_id":"camera/capture0/solve0",
+  "master_frame_id":"camera/master0",
+  "precision":5
 }
 
 def np2F(d):  #numpy to Floats
   f=Floats()
   f.data=np.ravel(d)
   return f
+
+def getRT(base,ref):
+  try:
+    ts=tfBuffer.lookup_transform(base,ref,rospy.Time())
+    rospy.loginfo("cropper::getRT::TF lookup success "+base+"->"+ref)
+    RT=tflib.toRT(ts.transform)
+  except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+    RT=None
+  return RT
 
 def lay1st(base,offset):
   while True:
@@ -73,12 +85,12 @@ def alayer(base,offset):
       else:
         return cens
 
-def RT(cod):
+def toRT(cod):
   tr=np.eye(4)
   tr[:,3]=np.append(cod,[1]).T
 #  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
 #  tr[:3,:3]=R.as_matrix()
-  return tr
+  return np.asmatrix(tr)
 
 def place():
   layout=[]
@@ -86,7 +98,7 @@ def place():
     l=alayer(layout,Config["dmin"]*n)
     if l is None: return None
     xs=(np.random.rand(len(l),1)-0.5)*Config["range_x"]
-    l=np.array(list(map(RT,np.hstack((xs,l)))))
+    l=np.array(list(map(toRT,np.hstack((xs,l)))))
     layout.append(l)
   return layout
 
@@ -111,7 +123,12 @@ def cb_redraw(msg):
   pub_wp.publish(np2F(scenePn))
 
 def cb_place(msg):
-  global sceneTf,scenePn,sceneXO
+  global sceneTf,scenePn,sceneXO,workPcd
+  if mError.data>0: return
+  if len(sceneXO)>0:
+    mError.data=9001
+    pub_err.publish(mError)
+    return
   while True:
     sceneTf=place()
     if sceneTf is not None: break
@@ -121,27 +138,85 @@ def cb_place(msg):
   if np.sum(txo)==0: txo[0]=True
   sceneXO.append(txo)
   print("sceneXO",sceneXO)
-  pcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
-  print("PLY",len(pcd.points))
-  scenePn=mkscene(pcd,sceneTf,sceneXO)
+  workPcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
+  print("PLY",len(workPcd.points))
+  scenePn=mkscene(workPcd,sceneTf,sceneXO)
   cb_redraw(0)
 
 def cb_place1(msg):
-  global sceneTf,scenePn
+  global sceneTf,scenePn,sceneXO,mError
   sceneTf=[[np.eye(4)]]
   print("sceneTf",sceneTf)
   pcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
   print("PLY",len(pcd.points))
   scenePn=mkscene(pcd,sceneTf,[[True]])
+  sceneXO=[]
+  sceneTf=[]
   cb_redraw(0)
+  cb_clear(0)
+
+def chkdist(Ts):
+  mTs=getRT(Config["master_frame_id"],Config["solve_frame_id"])
+  bTm=getRT("world",Config["master_frame_id"])
+  bTx=bTm.dot(mTs).dot(bTm.I)
+  d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
+  print("dist",d)
+  nd=np.argmin(d)
+  if d[nd]<Config["precision"] and sceneXO[-1][nd]:
+    return nd
+  else:
+    mError.data=9000
+    pub_err.publish(mError)
+    return -1
 
 def cb_pick1(msg):
-  pass
+  global sceneTf,scenePn,sceneXO,mError
+  if mError.data>0: return
+  n=chkdist(sceneTf[-1])
+  print("pick1",n,len(sceneTf[-1]))
+  if n<0:
+    mError.data=9010
+    pub_err.publish(mError)
+    return
+  if n==0 or n>=len(sceneTf[-1]):
+    mError.data=9011
+    pub_err.publish(mError)
+    return
+  sceneXO[-1][n]=False
+  if not any(sceneXO[-1]):
+    sceneXO.pop(-1)
+    sceneTf.pop(-1)
+  scenePn=mkscene(workPcd,sceneTf,sceneXO)
+  cb_redraw(0)
+
 def cb_pick2(msg):
-  pass
+  global sceneTf,scenePn,sceneXO,mError
+  if mError.data>0: return
+  n=chkdist(sceneTf[-1])
+  print("pick2",n,len(sceneTf[-1]))
+  if n<0:
+    mError.data=9020
+    pub_err.publish(mError)
+    return
+  if n>0 and n<len(sceneTf[-1])-1:
+    mError.data=9021
+    pub_err.publish(mError)
+    return
+  if any(sceneXO[-1][1:-1]):
+    mError.data=9022
+    pub_err.publish(mError)
+    return
+  sceneXO[-1][n]=False
+  if not any(sceneXO[-1]):
+    sceneXO.pop(-1)
+    sceneTf.pop(-1)
+  scenePn=mkscene(workPcd,sceneTf,sceneXO)
+  cb_redraw(0)
+
 def cb_pick3(msg):
   pass
 def cb_clear(msg):
+  global mError
   mError.data=0
   pub_err.publish(mError)
 
@@ -179,9 +254,11 @@ pub_err=rospy.Publisher("/rsim/error",Int32,queue_size=1)
 ###TF
 tfBuffer=tf2_ros.Buffer()
 listener=tf2_ros.TransformListener(tfBuffer)
-###Const
+###Global
 mError=Int32()
-
+sceneXO=[]
+sceneTf=[]
+scenePn=np.array([])
 #if __name__=="__main__":
 #
 
