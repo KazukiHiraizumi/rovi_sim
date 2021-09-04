@@ -14,12 +14,14 @@ from geometry_msgs.msg import Transform
 from geometry_msgs.msg import TransformStamped
 from rovi_utils import tflib
 
+Param={
+  "org":[0,0,500],
+  "step_y":150,
+  "step_z":50
+}
 Config={
   "source_frame_id":"world",
   "target_frame_id":"tool0_controller",
-  "org":[0,0,500],
-  "step_y":150,
-  "step_z":15
 }
 
 def getRT(base,ref):
@@ -49,7 +51,7 @@ def mov_xyz(pos,relative=False):
   pub_tf.publish(tf);
   
 def cb_jogy(msg):
-  step=Config["step_y"]
+  step=Param["step_y"]
   if not msg.data: step=-step
   mov_xyz([0,step,0],relative=True)
 
@@ -57,14 +59,16 @@ def cb_jogz(msg):
   pass
 
 def cb_org(msg):
-  mov_xyz(Config["org"])
-
-########################################################
+  try:
+    Param.update(rospy.get_param("~param"))
+  except Exception as e:
+    print("get_param exception:",e.args)
+  mov_xyz([Param["org_x"],Param["org_y"],Param["org_z"],Param["org_rx"],Param["org_ry"],Param["org_rz"]]) ########################################################
 rospy.init_node("vrobo",anonymous=True)
 thispath=subprocess.getoutput("rospack find rovi_sim")
 ###Load params
 try:
-  Config.update(rospy.get_param("/config/vrobo"))
+  Config.update(rospy.get_param("/config.vrobo"))
 except Exception as e:
   print("get_param exception:",e.args)
 ###Topics

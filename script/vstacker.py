@@ -135,7 +135,7 @@ def cb_place(msg):
   print("sceneTf",sceneTf)
   sceneXO=mkbools(sceneTf)
   txo=np.random.rand(len(sceneXO.pop(-1)))<np.random.rand()
-  if np.sum(txo)==0: txo[0]=True
+  txo[0]=True
   sceneXO.append(txo)
   print("sceneXO",sceneXO)
   workPcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
