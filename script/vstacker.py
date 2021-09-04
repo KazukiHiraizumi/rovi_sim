@@ -102,67 +102,64 @@ def place():
     layout.append(l)
   return layout
 
-def mkscene(pcd,tfs,fls):
+def mkscene(pcd,stack):
   scn=np.asarray([]).reshape((-1,3))
-  for layer in zip(tfs,fls):
-    for n,tr in enumerate(layer[0]):
-      if not layer[1][n]: continue
-      p=copy.deepcopy(pcd)
+  for layer in stack:
+#    for n,tr in enumerate(layer["tf"],layer["xo"],layer["wp"]):
+    for tr,xo,wp in zip(layer["tf"],layer["xo"],layer["wp"]):
+      if not xo: continue
+      p=copy.deepcopy(pcd[wp])
       p.transform(tr)
       pn=np.array(p.points)
       scn=np.vstack((scn,pn))
   return scn
 
-def mkbools(tfs):
-  bs=[]
-  for layer in tfs:
-    bs.append(np.ones(len(layer),dtype=bool))
-  return bs
-
 def cb_redraw(msg):
-  pub_wp.publish(np2F(scenePn))
+  pub_wp.publish(np2F(Scene))
+
+def mkstack(tfs):
+  res=[]
+  for tf in tfs:
+    xo=np.ones(len(tf),dtype=bool)
+    wp=np.zeros(len(tf),dtype=int)
+    res.append({"tf":tf,"xo":xo,"wp":wp})
+  return res
 
 def cb_place(msg):
-  global sceneTf,scenePn,sceneXO,workPcd
+  global Scene,Stack
   if mError.data>0: return
-  if len(sceneXO)>0:
+  if len(Stack)>0:
     mError.data=9001
     pub_err.publish(mError)
     return
   while True:
-    sceneTf=place()
-    if sceneTf is not None: break
-  print("sceneTf",sceneTf)
-  sceneXO=mkbools(sceneTf)
-  txo=np.random.rand(len(sceneXO.pop(-1)))<np.random.rand()
+    tfs=place()
+    if tfs is not None: break
+  print("stack Tfs",tfs)
+  Stack=mkstack(tfs)
+  txo=np.random.rand(len(Stack[-1]["xo"]))<np.random.rand()
   txo[0]=True
-  sceneXO.append(txo)
-  print("sceneXO",sceneXO)
-  workPcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
-  print("PLY",len(workPcd.points))
-  scenePn=mkscene(workPcd,sceneTf,sceneXO)
+  txo[-1]=True
+  Stack[-1]["xo"]=txo
+  Scene=mkscene(Pcd,Stack)
   cb_redraw(0)
 
 def cb_place1(msg):
-  global sceneTf,scenePn,sceneXO,mError
-  sceneTf=[[np.eye(4)]]
-  print("sceneTf",sceneTf)
-  pcd=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
-  print("PLY",len(pcd.points))
-  scenePn=mkscene(pcd,sceneTf,[[True]])
-  sceneXO=[]
-  sceneTf=[]
+  global Scene,Stack
+  Scene=mkscene(Pcd,[{"tf":[np.eye(4)],"xo":[True],"wp":[0]}])
+  Stack=[]
   cb_redraw(0)
   cb_clear(0)
 
 def chkdist(Ts):
+  global mError
   mTs=getRT(Config["master_frame_id"],Config["solve_frame_id"])
   bTm=getRT("world",Config["master_frame_id"])
   bTx=bTm.dot(mTs).dot(bTm.I)
   d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
   print("dist",d)
   nd=np.argmin(d)
-  if d[nd]<Config["precision"] and sceneXO[-1][nd]:
+  if d[nd]<Config["precision"] and Stack[-1]["xo"][nd]:
     return nd
   else:
     mError.data=9000
@@ -170,47 +167,49 @@ def chkdist(Ts):
     return -1
 
 def cb_pick1(msg):
-  global sceneTf,scenePn,sceneXO,mError
+  global Scene,Stack,mError
   if mError.data>0: return
-  n=chkdist(sceneTf[-1])
-  print("pick1",n,len(sceneTf[-1]))
+  tos=Stack[-1]
+  n=chkdist(tos["tf"])
+  print("pick1",n,len(tos["tf"]))
   if n<0:
     mError.data=9010
     pub_err.publish(mError)
     return
-  if n==0 or n>=len(sceneTf[-1]):
+  if n==0 or n>=len(tos["tf"]):
     mError.data=9011
     pub_err.publish(mError)
     return
-  sceneXO[-1][n]=False
-  if not any(sceneXO[-1]):
-    sceneXO.pop(-1)
-    sceneTf.pop(-1)
-  scenePn=mkscene(workPcd,sceneTf,sceneXO)
+  tos["xo"][n]=False
+  if not any(tos["xo"]): Stack.pop(-1)
+  Scene=mkscene(Pcd,Stack)
   cb_redraw(0)
 
 def cb_pick2(msg):
-  global sceneTf,scenePn,sceneXO,mError
+  global Scene,Stack,mError
   if mError.data>0: return
-  n=chkdist(sceneTf[-1])
-  print("pick2",n,len(sceneTf[-1]))
+  tos=Stack[-1]
+  n=chkdist(tos["tf"])
+  print("pick2",n,len(tos["tf"]))
   if n<0:
     mError.data=9020
     pub_err.publish(mError)
     return
-  if n>0 and n<len(sceneTf[-1])-1:
+  if n>0 and n<len(tos["tf"])-1:
     mError.data=9021
     pub_err.publish(mError)
     return
-  if any(sceneXO[-1][1:-1]):
+  if n==0 and tos["xo"][1]:
     mError.data=9022
     pub_err.publish(mError)
     return
-  sceneXO[-1][n]=False
-  if not any(sceneXO[-1]):
-    sceneXO.pop(-1)
-    sceneTf.pop(-1)
-  scenePn=mkscene(workPcd,sceneTf,sceneXO)
+  if n==len(tos["xo"])-1 and tos["xo"][len(tos["xo"])-2]:
+    mError.data=9023
+    pub_err.publish(mError)
+    return
+  tos["xo"][n]=False
+  if not any(tos["xo"]): Stack.pop(-1)
+  Scene=mkscene(Pcd,Stack)
   cb_redraw(0)
 
 def cb_pick3(msg):
@@ -256,9 +255,11 @@ tfBuffer=tf2_ros.Buffer()
 listener=tf2_ros.TransformListener(tfBuffer)
 ###Global
 mError=Int32()
-sceneXO=[]
-sceneTf=[]
-scenePn=np.array([])
+Scene=[]  #will be point cloud ndarray as [[x,y,z]...]
+Stack=[]  #will be as [{"tf":[...],"xo":[...],"wp":[...]}...]
+Pcd=[]
+Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['model']))
+#Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['diff']))
 #if __name__=="__main__":
 #
 
