@@ -21,7 +21,8 @@ Param={
 Config={
   "source_frame_id":"world",
   "target_frame_id":"camera",
-  "solve_frame_id":"camera/capture0"
+  "master_frame_id":"camera/master0",
+  "solve_frame_id":"camera/capture0/solve0"
 }
 
 def cb_redraw(msg):
@@ -35,28 +36,11 @@ def np2F(d):  #numpy to Floats
 def getRT(base,ref):
   try:
     ts=tfBuffer.lookup_transform(base,ref,rospy.Time())
-    rospy.loginfo("cropper::getRT::TF lookup success "+base+"->"+ref)
+    rospy.loginfo("getRT::TF lookup success "+base+"->"+ref)
     RT=tflib.toRT(ts.transform)
   except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
     RT=None
   return RT
-
-def tf_set(pos):
-  tf=TransformStamped()
-  tf.header.stamp=rospy.Time.now()
-  tf.header.frame_id=Config["solve_frame_id"]
-  tf.child_frame_id=Config["solve_frame_id"]+"/solve0"
-  tf.transform.translation.x=pos[0]
-  tf.transform.translation.y=pos[1]
-  tf.transform.translation.z=pos[2]
-  tf.transform.rotation.x=0
-  tf.transform.rotation.y=0
-  tf.transform.rotation.z=0
-  tf.transform.rotation.w=1
-  broadcaster.sendTransform([])
-
-def tf_clear():
-  broadcaster.sendTransform([])
 
 def cb_ps(msg):
   global Scene
@@ -70,8 +54,11 @@ def cb_solve(msg):
     Param.update(rospy.get_param("-param"))
   except Exception as e:
     print("get_param exception:",e.args)
-  cb_redraw(0)
-  rospy.Timer(rospy.Duration(0.1),lambda ev: pub_sol.publish(mTrue),oneshot=True)
+  if len(Scene)>10000:
+    cb_redraw(0)
+    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_thru.publish(mTrue),oneshot=True)
+  else:
+    pub_cut.publish(mFalse)
 
 ########################################################
 rospy.init_node("prepro",anonymous=True)
@@ -87,7 +74,8 @@ rospy.Subscriber("/request/solve",Bool,cb_solve)
 rospy.Subscriber("/request/redraw",Bool,cb_redraw)
 pub_ps=rospy.Publisher("~out/floats",numpy_msg(Floats),queue_size=1)
 pub_str=rospy.Publisher("/report",String,queue_size=1)
-pub_sol=rospy.Publisher("~solve",Bool,queue_size=1)
+pub_thru=rospy.Publisher("~passthru",Bool,queue_size=1)
+pub_cut=rospy.Publisher("~shortcut",Bool,queue_size=1)
 ###Bool message
 mTrue=Bool();mTrue.data=True
 mFalse=Bool();mFalse.data=False

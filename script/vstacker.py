@@ -37,7 +37,7 @@ def np2F(d):  #numpy to Floats
 def getRT(base,ref):
   try:
     ts=tfBuffer.lookup_transform(base,ref,rospy.Time())
-    rospy.loginfo("cropper::getRT::TF lookup success "+base+"->"+ref)
+    rospy.loginfo("getRT::TF lookup success "+base+"->"+ref)
     RT=tflib.toRT(ts.transform)
   except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
     RT=None
@@ -105,7 +105,6 @@ def place():
 def mkscene(pcd,stack):
   scn=np.asarray([]).reshape((-1,3))
   for layer in stack:
-#    for n,tr in enumerate(layer["tf"],layer["xo"],layer["wp"]):
     for tr,xo,wp in zip(layer["tf"],layer["xo"],layer["wp"]):
       if not xo: continue
       p=copy.deepcopy(pcd[wp])
@@ -176,10 +175,11 @@ def cb_pick1(msg):
     mError.data=9010
     pub_err.publish(mError)
     return
-  if n==0 or n>=len(tos["tf"]):
-    mError.data=9011
-    pub_err.publish(mError)
-    return
+  if n==0 or n>=len(tos["tf"])-1:
+    if abs(tos["tf"][n][1,3])>Config["range_y"]/2-Config["dmin"]:
+      mError.data=9011
+      pub_err.publish(mError)
+      return
   tos["xo"][n]=False
   if not any(tos["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)

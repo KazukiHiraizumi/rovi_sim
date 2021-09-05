@@ -8,7 +8,7 @@ import tf2_ros
 import os
 import sys
 import subprocess
-from rovi.msg import Floats
+from scipy.spatial.transform import Rotation as R
 from std_msgs.msg import Bool
 from geometry_msgs.msg import Transform
 from geometry_msgs.msg import TransformStamped
@@ -33,27 +33,26 @@ def getRT(base,ref):
     RT=None
   return RT
 
-def mov_xyz(pos,relative=False):
-  Rt=getRT(Config["source_frame_id"],Config["target_frame_id"])
+def mov(pos,relative=False):
+  pos.extend([0,0,0])
+  rot=R.from_euler('ZX',pos[3:5],degrees=True)
+  Rt=np.eye(4)
+  Rt[:3,:3]=rot.as_matrix()
+  Rt[:3,3]=np.array(pos[:3]).T
+  if relative:
+    Ro=getRT(Config["source_frame_id"],Config["target_frame_id"])
+    Rt=Rt.dot(Ro)
   tf=TransformStamped()
   tf.header.stamp=rospy.Time.now()
   tf.header.frame_id=Config["source_frame_id"]
   tf.child_frame_id=Config["target_frame_id"]
   tf.transform=tflib.fromRT(Rt)
-  if not relative:
-    tf.transform.translation.x=pos[0]
-    tf.transform.translation.y=pos[1]
-    tf.transform.translation.z=pos[2]
-  else:
-    tf.transform.translation.x=tf.transform.translation.x+pos[0]
-    tf.transform.translation.y=tf.transform.translation.y+pos[1]
-    tf.transform.translation.z=tf.transform.translation.z+pos[2]
   pub_tf.publish(tf);
   
 def cb_jogy(msg):
   step=Param["step_y"]
   if not msg.data: step=-step
-  mov_xyz([0,step,0],relative=True)
+  mov([0,step,0],relative=True)
 
 def cb_jogz(msg):
   pass
@@ -63,7 +62,9 @@ def cb_org(msg):
     Param.update(rospy.get_param("~param"))
   except Exception as e:
     print("get_param exception:",e.args)
-  mov_xyz([Param["org_x"],Param["org_y"],Param["org_z"],Param["org_rx"],Param["org_ry"],Param["org_rz"]]) ########################################################
+  p=Param
+  mov([p["org_x"],p["org_y"],p["org_z"],p["org_rz"],p["org_rx"]])
+########################################################
 rospy.init_node("vrobo",anonymous=True)
 thispath=subprocess.getoutput("rospack find rovi_sim")
 ###Load params

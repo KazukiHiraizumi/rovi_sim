@@ -40,8 +40,11 @@ config:
       label: "Viewer"
       package: rovi_sim
       file: viewer.launch
-      confirm: True
       auto: 10
+    launch_auto:
+      label: "自動"
+      package: rovi_sim
+      file: auto.launch
 
     indicator1:
       label: "YCAM"

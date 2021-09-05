@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import roslib
+import rospy
+import tf
+import tf2_ros
+import os
+import sys
+import subprocess
+from std_msgs.msg import Bool
+from std_msgs.msg import Int32
+from geometry_msgs.msg import Transform
+from rovi_utils import tflib
+
+Param={
+  "pos_y":[-300,-150,0,0,150,300,350,500,-350,500],
+  "pos_z":[800,720,640,560],
+  "lim_y":500,
+  "lim_z":500,
+  "end_y":400,
+  "wd":500
+}
+Config={
+}
+
+def getRT(base,ref):
+  try:
+    ts=tfBuffer.lookup_transform(base,ref,rospy.Time())
+    rospy.loginfo("getRT::TF lookup success "+base+"->"+ref)
+    RT=tflib.toRT(ts.transform)
+  except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+    RT=None
+  return RT
+
+def mov(Tc):
+  print("move",Tc[1,3],Tc[2,3])
+  rospy.set_param("/rsim/org_y",float(Tc[1,3]))
+  rospy.set_param("/rsim/org_z",float(Tc[2,3]))
+  pub_movo.publish(mTrue)
+
+def cb_start(msg):
+  global bTc,lot,locate,retry
+  locate={"y":0,"z":0}
+  retry={"solve":0,"capture":0}
+  bTc=np.eye(4)
+  bTc[:3,3]=np.array([0,Param["pos_y"][0],Param["pos_z"][0]]).T
+  rospy.Timer(rospy.Duration(1),lambda ev: mov(bTc),oneshot=True)
+  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+  if lot>0: pub_place.publish(mTrue)
+  lot=lot+1
+  print("auto lot",lot)
+
+def cb_capture(msg):
+  if(msg.data):
+    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)
+  else:
+    print("capture failed")
+
+def cb_solve(msg):
+  global bTc,retry
+  if(msg.data):
+    bTs=getRT("world","camera/capture0/solve0")
+    sTw=np.eye(4)
+    sTw[2,3]=Param["wd"]
+    bTw=bTs.dot(sTw)
+    print("auto work y",bTw[1,3])
+    if abs(bTw[1,3])<Param["end_y"]: pub_pick1.publish(mTrue)
+    else: pub_pick2.publish(mTrue)
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)
+    rospy.Timer(rospy.Duration(3),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+  elif retry["solve"]<3:
+    retry["solve"]=retry["solve"]+1
+    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)
+  else:
+    retry["solve"]=0
+    locate["y"]=locate["y"]+1
+    if locate["y"]<len(Param["pos_y"]):
+      bTc[1,3]=Param["pos_y"][locate["y"]]
+      mov(bTc)
+      rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+    else:
+      locate["y"]=0
+      locate["z"]=locate["z"]+1
+      if locate["z"]<len(Param["pos_z"]):
+        bTc[1,3]=Param["pos_y"][locate["y"]]
+        bTc[2,3]=Param["pos_z"][locate["z"]]
+        mov(bTc)
+        rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+      else:
+         print("finished")
+         rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
+
+def cb_error(msg):
+  global error
+  error=msg.data
+
+########################################################
+rospy.init_node("autotest",anonymous=True)
+thispath=subprocess.getoutput("rospack find rovi_sim")
+###Load params
+try:
+  Config.update(rospy.get_param("/config/auto"))
+except Exception as e:
+  print("get_param exception:",e.args)
+###Topics
+rospy.Subscriber("/response/capture",Bool,cb_capture)
+rospy.Subscriber("/response/solve",Bool,cb_solve)
+rospy.Subscriber("/rsim/error",Int32,cb_error)
+pub_clear=rospy.Publisher("/request/clear",Bool,queue_size=1)
+pub_capt=rospy.Publisher("/request/capture",Bool,queue_size=1)
+pub_solve=rospy.Publisher("/request/solve",Bool,queue_size=1)
+pub_movo=rospy.Publisher("/rsim/mov_o",Bool,queue_size=1)
+pub_jogy=rospy.Publisher("/rsim/jog_y",Bool,queue_size=1)
+pub_pick1=rospy.Publisher("/rsim/pick1",Bool,queue_size=1)
+pub_pick2=rospy.Publisher("/rsim/pick2",Bool,queue_size=1)
+pub_place=rospy.Publisher("/rsim/place",Bool,queue_size=1)
+###Bool message
+mTrue=Bool();mTrue.data=True
+mFalse=Bool();mFalse.data=False
+###TF
+tfBuffer=tf2_ros.Buffer()
+listener=tf2_ros.TransformListener(tfBuffer)
+broadcaster=tf2_ros.StaticTransformBroadcaster()
+
+#if __name__=="__main__":
+
+bTc=np.eye(4)
+rospy.Timer(rospy.Duration(1),cb_start,oneshot=True)
+
+error=0
+lot=0
+retry={"solve":0,"capture":0}
+locate={"y":0,"z":0}
+while not rospy.is_shutdown():
+  if error!=0: sys.exit(0)
+  rospy.sleep(0.1)
+

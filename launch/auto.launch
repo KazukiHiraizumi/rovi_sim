@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rovi_sim" type="auto.py" name="" output="screen" />
+</launch>

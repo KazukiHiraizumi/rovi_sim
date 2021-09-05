@@ -35,7 +35,7 @@ def np2F(d):  #numpy to Floats
 def getRT(base,ref):
   try:
     ts=tfBuffer.lookup_transform(base,ref,rospy.Time())
-    rospy.loginfo("cropper::getRT::TF lookup success "+base+"->"+ref)
+    rospy.loginfo("getRT::TF lookup success "+base+"->"+ref)
     RT=tflib.toRT(ts.transform)
   except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
     RT=None
@@ -60,6 +60,10 @@ def cb_capture(msg):
   zp=np.ravel(scn.T[2])
   scn=scn[zp<Config["trim_far"]]
   print("vcam trimmed",scn.shape)
+  if len(scn)<5000:
+    print("vcam points too few, abort hidden...",len(scn))
+    pub_ps.publish(np2F(scn))
+    return  
   pcd=o3d.geometry.PointCloud()
   pcd.points=o3d.utility.Vector3dVector(scn)
   pset=set([])
