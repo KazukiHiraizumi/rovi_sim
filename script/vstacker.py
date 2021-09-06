@@ -130,7 +130,9 @@ def mkstack(tfs):
 
 def cb_place(msg):
   global Scene,Stack
-  if mError.data>0: return
+  if mError.data>0:
+    pub_err.publish(mError)
+    return
   if len(Stack)>0:
     mError.data=9001
     pub_err.publish(mError)
@@ -171,7 +173,9 @@ def chkdist(Ts):
 
 def cb_pick1(msg):
   global Scene,Stack,mError
-  if mError.data>0: return
+  if mError.data>0:
+    pub_err.publish(mError)
+    return
   tos=Stack[-1]
   n=chkdist(tos["tf"])
   print("pick1",n,len(tos["tf"]))
@@ -191,7 +195,9 @@ def cb_pick1(msg):
 
 def cb_pick2(msg):
   global Scene,Stack,mError
-  if mError.data>0: return
+  if mError.data>0:
+    pub_err.publish(mError)
+    return
   tos=Stack[-1]
   n=chkdist(tos["tf"])
   print("pick2",n,len(tos["tf"]))
@@ -199,15 +205,17 @@ def cb_pick2(msg):
     mError.data=9020
     pub_err.publish(mError)
     return
-  if n>0 and n<len(tos["tf"])-1:
-    mError.data=9021
-    pub_err.publish(mError)
-    return
-  if n==0 and tos["xo"][1]:
-    mError.data=9022
-    pub_err.publish(mError)
-    return
-  if n==len(tos["xo"])-1 and tos["xo"][len(tos["xo"])-2]:
+  if n<int(len(tos["xo"]/3)):
+    if any(tos["xo"][n+1:n+3]):
+      mError.data=9021
+      pub_err.publish(mError)
+      return
+  elif n>int(len(tos["xo"]*2/3)):
+    if any(tos["xo"][n-3:n-1]):
+      mError.data=9022
+      pub_err.publish(mError)
+      return
+  else:
     mError.data=9023
     pub_err.publish(mError)
     return

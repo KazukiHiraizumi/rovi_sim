@@ -8,17 +8,17 @@ import tf2_ros
 import os
 import sys
 import subprocess
+from scipy.spatial.transform import Rotation as R
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32
 from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
 Param={
-  "pos_y":[-300,-150,0,0,150,300,350,500,-350,500],
+  "pos_y":[-240,-120,0,120,240,300,-300],
+  "pos_rx":[0,0,0,0,0,10,-10],
   "pos_z":[800,720,640,560],
-  "lim_y":500,
-  "lim_z":500,
-  "end_y":400,
+  "end_y":325,
   "wd":500
 }
 Config={
@@ -37,6 +37,9 @@ def mov(Tc):
   print("move",Tc[1,3],Tc[2,3])
   rospy.set_param("/rsim/org_y",float(Tc[1,3]))
   rospy.set_param("/rsim/org_z",float(Tc[2,3]))
+  rot=R.from_matrix(Tc[:3,:3]).as_euler('ZXY',degrees=True)
+  rospy.set_param("/rsim/org_rz",float(rot[0]))
+  rospy.set_param("/rsim/org_rx",float(rot[1]))
   pub_movo.publish(mTrue)
 
 def cb_start(msg):
@@ -45,6 +48,7 @@ def cb_start(msg):
   retry={"solve":0,"capture":0}
   bTc=np.eye(4)
   bTc[:3,3]=np.array([0,Param["pos_y"][0],Param["pos_z"][0]]).T
+  bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][0],degrees=True).as_matrix()
   rospy.Timer(rospy.Duration(1),lambda ev: mov(bTc),oneshot=True)
   rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
   if lot>0: pub_place.publish(mTrue)
@@ -77,6 +81,7 @@ def cb_solve(msg):
     locate["y"]=locate["y"]+1
     if locate["y"]<len(Param["pos_y"]):
       bTc[1,3]=Param["pos_y"][locate["y"]]
+      bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
       mov(bTc)
       rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
     else:
@@ -85,6 +90,7 @@ def cb_solve(msg):
       if locate["z"]<len(Param["pos_z"]):
         bTc[1,3]=Param["pos_y"][locate["y"]]
         bTc[2,3]=Param["pos_z"][locate["z"]]
+        bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
         mov(bTc)
         rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
       else:
