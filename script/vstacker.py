@@ -23,7 +23,7 @@ Config={
   "layers":3,
   "dmin":100,
   "range_x":50,
-  "range_y":800,
+  "range_y":1000,
   "solve_frame_id":"camera/capture0/solve0",
   "master_frame_id":"camera/master0",
   "precision":5,
