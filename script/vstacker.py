@@ -23,10 +23,11 @@ Config={
   "layers":3,
   "dmin":100,
   "range_x":50,
-  "range_y":1000,
+  "range_y":800,
   "solve_frame_id":"camera/capture0/solve0",
   "master_frame_id":"camera/master0",
-  "precision":5
+  "precision":5,
+  "env_tr":[0,0,-190, 0,0,.707,.707]
 }
 
 def np2F(d):  #numpy to Floats
@@ -111,6 +112,9 @@ def mkscene(pcd,stack):
       p.transform(tr)
       pn=np.array(p.points)
       scn=np.vstack((scn,pn))
+  pn=np.array(Pcd[-1].points)  #environ points
+  print("Env",len(pn),np.max(pn.T[1]),np.min(pn.T[1]))
+  scn=np.vstack((scn,pn))
   return scn
 
 def cb_redraw(msg):
@@ -259,7 +263,10 @@ Scene=[]  #will be point cloud ndarray as [[x,y,z]...]
 Stack=[]  #will be as [{"tf":[...],"xo":[...],"wp":[...]}...]
 Pcd=[]
 Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['model']))
+Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['environ']))
 #Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['diff']))
+if len(Pcd)>1:
+  Pcd[-1].transform(tflib.toRTfromVec(Config["env_tr"]))
 #if __name__=="__main__":
 #
 

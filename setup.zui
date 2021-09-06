@@ -12,7 +12,7 @@
 "class":"Number", "name":"/rsim/org_y","label":"原位置 Y"
 "class":"Number", "name":"/rsim/org_z","label":"Z"
 "class":"Number", "name":"/rsim/org_rz","label":"Z回転"
-"class":"Number", "name":"/rsim/org_rz","label":"X回転"
+"class":"Number", "name":"/rsim/org_rx","label":"X回転"
 "class":"Pub",    "name":"/rsim/mov_o","label":"原位置へ移動"
 "class":"Title",  "label":"1-3.CAMERA操作"
 "class":"Pub",    "name":"/request/capture","label":"撮影"

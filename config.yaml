@@ -1,6 +1,7 @@
 config:
   vstacker:
     model: test/shaft_2.ply
+    environ: test/env.ply
     layers: 3
     dmin: 100
     range_x: 50
