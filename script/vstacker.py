@@ -26,6 +26,7 @@ Config={
   "range_y":1000,
   "solve_frame_id":"camera/capture0/solve0",
   "master_frame_id":"camera/master0",
+  "bucket_frame_id":"user1",
   "precision":5,
   "env_tr":[0,0,-190, 0,0,.707,.707]
 }
@@ -89,8 +90,8 @@ def alayer(base,offset):
 def toRT(cod):
   tr=np.eye(4)
   tr[:,3]=np.append(cod,[1]).T
-#  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
-#  tr[:3,:3]=R.as_matrix()
+  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
+  tr[:3,:3]=R.as_matrix()
   return np.asmatrix(tr)
 
 def place():

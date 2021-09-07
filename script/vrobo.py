@@ -20,7 +20,7 @@ Param={
   "step_z":50
 }
 Config={
-  "source_frame_id":"world",
+  "source_frame_id":"base",
   "target_frame_id":"tool0_controller",
 }
 
