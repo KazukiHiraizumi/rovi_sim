@@ -72,7 +72,7 @@ def cb_solve(msg):
     if abs(bTw[1,3])<Param["end_y"]: pub_pick1.publish(mTrue)
     else: pub_pick2.publish(mTrue)
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)
-    rospy.Timer(rospy.Duration(3),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+    rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
   elif retry["solve"]<3:
     retry["solve"]=retry["solve"]+1
     rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)
@@ -83,7 +83,7 @@ def cb_solve(msg):
       bTc[1,3]=Param["pos_y"][locate["y"]]
       bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
       mov(bTc)
-      rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+      rospy.Timer(rospy.Duration(2),lambda ev: pub_capt.publish(mTrue),oneshot=True)
     else:
       locate["y"]=0
       locate["z"]=locate["z"]+1
@@ -92,7 +92,7 @@ def cb_solve(msg):
         bTc[2,3]=Param["pos_z"][locate["z"]]
         bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
         mov(bTc)
-        rospy.Timer(rospy.Duration(0.1),lambda ev: pub_capt.publish(mTrue),oneshot=True)
+        rospy.Timer(rospy.Duration(2),lambda ev: pub_capt.publish(mTrue),oneshot=True)
       else:
          print("finished")
          rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
