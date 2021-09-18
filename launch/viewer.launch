@@ -31,4 +31,5 @@
   <node pkg="rviz_tools_py" type="cutter.py" name="" output="screen">
     <param name="/cutter/refs" type="str" value="/searcher/cutter" />
   </node>
+  <node pkg="rovi_csp" type="csp30.py" name="" />
 </launch>
