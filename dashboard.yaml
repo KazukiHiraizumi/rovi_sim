@@ -38,7 +38,7 @@ config:
       post: "wmctrl -r rviz -e 0,0,0,1366,600"
     launch_viewer:
       label: "Viewer"
-      package: rovi_sim
+      package: rovi_csp
       file: viewer.launch
       auto: 10
     launch_auto:
