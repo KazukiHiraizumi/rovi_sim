@@ -1,6 +1,5 @@
 <launch>
-  <include file="$(find rovi_csp)/launch/vt.launch" />
-<!-- Parameters override -->
-  <rosparam command="load" file="$(find rovi_sim)/recipe/param.yaml" />
-  <rosparam command="load" file="$(find rovi_sim)/rcalib.yaml" />
+  <include file="$(find rovi_csp)/launch/vt.launch">
+    <arg name="ws" value="$(find rovi_sim)" />
+  </include>
 </launch>
