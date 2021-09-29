@@ -170,6 +170,7 @@ def chkdist(Ts):
   else:
     mError.data=9000
     pub_err.publish(mError)
+    print("dist err",d[nd])
     return -1
 
 def cb_pick1(msg):

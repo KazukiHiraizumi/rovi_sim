@@ -10,7 +10,7 @@ cropper:
   nfrad: 5
 picker:
   azimuth:
-    max: 20
+    max: 90
     min: 0
   fitness:
     max: 1
@@ -44,12 +44,12 @@ rovi:
     projector:
       Intensity: 255
 rsim:
-  org_rx: 0
+  org_rx: 0.0
   org_ry: 0
   org_rz: 0.0
   org_x: 0
-  org_y: 0.0
-  org_z: 500
+  org_y: 0
+  org_z: 500.0
   wd: 500
 searcher:
   cutter:

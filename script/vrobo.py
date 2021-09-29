@@ -69,7 +69,7 @@ rospy.init_node("vrobo",anonymous=True)
 thispath=subprocess.getoutput("rospack find rovi_sim")
 ###Load params
 try:
-  Config.update(rospy.get_param("/config.vrobo"))
+  Config.update(rospy.get_param("/config/vrobo"))
 except Exception as e:
   print("get_param exception:",e.args)
 ###Topics

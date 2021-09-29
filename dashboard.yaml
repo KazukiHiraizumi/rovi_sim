@@ -34,8 +34,6 @@ config:
       label: "セットアップ"
       package: rovi_sim
       file: setup.launch
-      pre: "wmctrl -r rviz -e 0,0,0,1000,600"
-      post: "wmctrl -r rviz -e 0,0,0,1366,600"
     launch_viewer:
       label: "Viewer"
       package: rovi_sim
