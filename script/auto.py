@@ -18,6 +18,7 @@ Param={
   "pos_y":[-240,-120,0,120,240,300,-300],
   "pos_rx":[0,0,0,0,0,10,-10],
   "pos_z":[800,720,640,560],
+  "pick2":[False,False,False,False,False,True,True],
   "end_y":320,
   "wd":500
 }
@@ -69,7 +70,8 @@ def cb_solve(msg):
     sTw[2,3]=Param["wd"]
     bTw=bTs.dot(sTw)
     print("auto work y",bTw[1,3])
-    if abs(bTw[1,3])<Param["end_y"]: pub_pick1.publish(mTrue)
+    if not Param["pick2"][locate["y"]]: pub_pick1.publish(mTrue)
+    elif abs(bTw[1,3])<Param["end_y"]: pub_pick1.publish(mTrue)
     else: pub_pick2.publish(mTrue)
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
