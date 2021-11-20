@@ -10,6 +10,7 @@ import sys
 import subprocess
 from scipy.spatial.transform import Rotation as R
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 from std_msgs.msg import Int32
 from geometry_msgs.msg import Transform
 from rovi_utils import tflib
@@ -75,10 +76,8 @@ def cb_solve(msg):
     else: pub_pick2.publish(mTrue)
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
-  elif retry["solve"]<3:
-    retry["solve"]=retry["solve"]+1
-    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)
-  else:
+  elif stats["volume"][1]!=0:
+    print("Volume too few")
     retry["solve"]=0
     locate["y"]=locate["y"]+1
     if locate["y"]<len(Param["pos_y"]):
@@ -96,12 +95,26 @@ def cb_solve(msg):
         mov(bTc)
         rospy.Timer(rospy.Duration(2),lambda ev: pub_capt.publish(mTrue),oneshot=True)
       else:
-         print("finished")
+         print("Finished, reload next stack")
          rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
+  elif retry["solve"]<3:
+    retry["solve"]=retry["solve"]+1
+    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)
+  else:
+    print("Solve failed")
+    err=Int32()
+    err.data=9100
+    pub_error.publish(err)
 
 def cb_error(msg):
   global error
   error=msg.data
+
+def cb_report(msg):
+  global stats
+  d=eval(msg.data)
+  stats.update(d)
+
 
 ########################################################
 rospy.init_node("autotest",anonymous=True)
@@ -115,6 +128,7 @@ except Exception as e:
 rospy.Subscriber("/response/capture",Bool,cb_capture)
 rospy.Subscriber("/response/solve",Bool,cb_solve)
 rospy.Subscriber("/rsim/error",Int32,cb_error)
+rospy.Subscriber("/report",String,cb_report)
 pub_clear=rospy.Publisher("/request/clear",Bool,queue_size=1)
 pub_capt=rospy.Publisher("/request/capture",Bool,queue_size=1)
 pub_solve=rospy.Publisher("/request/solve",Bool,queue_size=1)
@@ -123,6 +137,7 @@ pub_jogy=rospy.Publisher("/rsim/jog_y",Bool,queue_size=1)
 pub_pick1=rospy.Publisher("/rsim/pick1",Bool,queue_size=1)
 pub_pick2=rospy.Publisher("/rsim/pick2",Bool,queue_size=1)
 pub_place=rospy.Publisher("/rsim/place",Bool,queue_size=1)
+pub_error=rospy.Publisher("/rsim/error",Int32,queue_size=1)
 ###Bool message
 mTrue=Bool();mTrue.data=True
 mFalse=Bool();mFalse.data=False
@@ -140,6 +155,7 @@ error=0
 lot=0
 retry={"solve":0,"capture":0}
 locate={"y":0,"z":0}
+stats={}
 while not rospy.is_shutdown():
   if error!=0: sys.exit(0)
   rospy.sleep(0.1)

@@ -15,6 +15,7 @@ from rovi.msg import Floats
 from rospy.numpy_msg import numpy_msg
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32
+from std_msgs.msg import String
 from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
@@ -165,6 +166,7 @@ def chkdist(Ts):
   d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
   print("dist",d)
   nd=np.argmin(d)
+  pub_report.publish(str({'Gx':Ts[nd][0,3],'Gy':Ts[nd][1,3],'Gz':Ts[nd][2,3]}))
   if d[nd]<Config["precision"] and Stack[-1]["xo"][nd]:
     return nd
   else:
@@ -185,11 +187,21 @@ def cb_pick1(msg):
     mError.data=9010
     pub_err.publish(mError)
     return
-  if n==0 or n>=len(tos["tf"])-1:
-    if abs(tos["tf"][n][1,3])>Config["range_y"]/2-Config["dmin"]:
+  if n==0:
+    if any(tos["xo"][1:4]):
       mError.data=9011
       pub_err.publish(mError)
       return
+  if n>=len(tos["tf"])-1:
+    if any(tos["xo"][-4:-1]):
+      mError.data=9012
+      pub_err.publish(mError)
+      return
+#  if n==0 or n>=len(tos["tf"])-1:
+#    if abs(tos["tf"][n][1,3])>Config["range_y"]/2-Config["dmin"]:
+#      mError.data=9011
+#      pub_err.publish(mError)
+#      return
   tos["xo"][n]=False
   if not any(tos["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)
@@ -207,20 +219,20 @@ def cb_pick2(msg):
     mError.data=9020
     pub_err.publish(mError)
     return
-  if n<int(len(tos["xo"]/3)):
-    if any(tos["xo"][n+1:n+3]):
-      mError.data=9021
-      pub_err.publish(mError)
-      return
-  elif n>int(len(tos["xo"]*2/3)):
-    if any(tos["xo"][n-3:n-1]):
-      mError.data=9022
-      pub_err.publish(mError)
-      return
-  else:
-    mError.data=9023
-    pub_err.publish(mError)
-    return
+#  if n<int(len(tos["xo"]/3)):
+#    if any(tos["xo"][n+1:n+3]):
+#      mError.data=9021
+#      pub_err.publish(mError)
+#      return
+#  elif n>int(len(tos["xo"]*2/3)):
+#    if any(tos["xo"][n-3:n-1]):
+#      mError.data=9022
+#      pub_err.publish(mError)
+#      return
+#  else:
+#    mError.data=9023
+#    pub_err.publish(mError)
+#    return
   tos["xo"][n]=False
   if not any(tos["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)
@@ -258,12 +270,13 @@ except Exception as e:
 rospy.Subscriber("/rsim/place",Bool,cb_place)
 rospy.Subscriber("/rsim/place1",Bool,cb_place1)
 rospy.Subscriber("/rsim/pick1",Bool,cb_pick1)
-rospy.Subscriber("/rsim/pick2",Bool,cb_pick2)
+rospy.Subscriber("/rsim/pick2",Bool,cb_pick1)
 rospy.Subscriber("/rsim/pick3",Bool,cb_pick3)
 rospy.Subscriber("/rsim/clear",Bool,cb_clear)
 rospy.Subscriber("/request/redraw",Bool,cb_redraw)
 pub_wp=rospy.Publisher("/rovi/wp_floats",numpy_msg(Floats),queue_size=1)
 pub_err=rospy.Publisher("/rsim/error",Int32,queue_size=1)
+pub_report=rospy.Publisher("/report",String,queue_size=1)
 ###TF
 tfBuffer=tf2_ros.Buffer()
 listener=tf2_ros.TransformListener(tfBuffer)
