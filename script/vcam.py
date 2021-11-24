@@ -17,7 +17,7 @@ from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
 Config={
-  "source_frame_id":"world",
+  "source_frame_id":"bucket",
   "target_frame_id":"camera",
   "trim_x":800,
   "trim_y":300,

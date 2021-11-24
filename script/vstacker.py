@@ -25,9 +25,11 @@ Config={
   "dmin":100,
   "range_x":50,
   "range_y":1000,
+  "margin_y":100,
   "solve_frame_id":"camera/capture0/solve0",
   "master_frame_id":"camera/master0",
-  "bucket_frame_id":"user1",
+  "journal_frame_id":"camera/master0/journal",
+  "bucket_frame_id":"bucket",
   "precision":5,
   "env_tr":[0,0,-190, 0,0,.707,.707]
 }
@@ -161,8 +163,10 @@ def cb_place1(msg):
 def chkdist(Ts):
   global mError
   mTs=getRT(Config["master_frame_id"],Config["solve_frame_id"])
-  bTm=getRT("world",Config["master_frame_id"])
-  bTx=bTm.dot(mTs).dot(bTm.I)
+  bTm=getRT(Config["bucket_frame_id"],Config["master_frame_id"])
+  mTx=getRT(Config["master_frame_id"],Config["journal_frame_id"]) #i.e. solve->journal(sTx)
+  bTx=bTm.dot(mTs).dot(mTx)
+#  bTx=bTm.dot(mTs).dot(bTm.I)
   d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
   print("dist",d)
   nd=np.argmin(d)
@@ -187,21 +191,21 @@ def cb_pick1(msg):
     mError.data=9010
     pub_err.publish(mError)
     return
-  if n==0:
-    if any(tos["xo"][1:4]):
+  cy=tos["tf"][n][1,3]
+  print("Cy ",cy)
+  ry=Config["range_y"]/2-Config["margin_y"]
+  if cy<-ry:
+    print("Hashi pick - ",cy)
+    if any(tos["xo"][n+1:n+4]):
       mError.data=9011
       pub_err.publish(mError)
       return
-  if n>=len(tos["tf"])-1:
-    if any(tos["xo"][-4:-1]):
+  if cy>ry:
+    print("Hashi pick + ",cy)
+    if any(tos["xo"][n-4:n-1]):
       mError.data=9012
       pub_err.publish(mError)
       return
-#  if n==0 or n>=len(tos["tf"])-1:
-#    if abs(tos["tf"][n][1,3])>Config["range_y"]/2-Config["dmin"]:
-#      mError.data=9011
-#      pub_err.publish(mError)
-#      return
   tos["xo"][n]=False
   if not any(tos["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)

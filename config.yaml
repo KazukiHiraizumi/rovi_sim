@@ -6,7 +6,8 @@ config:
     dmin: 100
     range_x: 50
     range_y: 930
-    env_tr: [0,-30,-190, 0,0,.707,.707]
+    margin_y: 110
+    env_tr: [0,0,-190, 0,0,.707,.707]
   vcam:
     trim_y: 300
     trim_x: 1000
@@ -16,8 +17,3 @@ config:
     step_y: 150
     step_z: 15
 
-config_tf:
-  user1:
-    parent_frame_id: base
-  user2:
-    parent_frame_id: base

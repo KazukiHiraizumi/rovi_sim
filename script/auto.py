@@ -66,13 +66,7 @@ def cb_capture(msg):
 def cb_solve(msg):
   global bTc,retry
   if(msg.data):
-    bTs=getRT("user1","camera/capture0/solve0")
-    sTw=np.eye(4)
-    sTw[2,3]=Param["wd"]
-    bTw=bTs.dot(sTw)
-    print("auto work y",bTw[1,3])
     if not Param["pick2"][locate["y"]]: pub_pick1.publish(mTrue)
-    elif abs(bTw[1,3])<Param["end_y"]: pub_pick1.publish(mTrue)
     else: pub_pick2.publish(mTrue)
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)
@@ -84,6 +78,7 @@ def cb_solve(msg):
       bTc[1,3]=Param["pos_y"][locate["y"]]
       bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
       mov(bTc)
+      rospy.set_param('/prepro/crop_edge',not Param["pick2"][locate["y"]])
       rospy.Timer(rospy.Duration(2),lambda ev: pub_capt.publish(mTrue),oneshot=True)
     else:
       locate["y"]=0
@@ -93,6 +88,7 @@ def cb_solve(msg):
         bTc[2,3]=Param["pos_z"][locate["z"]]
         bTc[:3,:3]=R.from_euler('X',Param["pos_rx"][locate["y"]],degrees=True).as_matrix()
         mov(bTc)
+        rospy.set_param('/prepro/crop_edge',Param["pick2"][locate["y"]])
         rospy.Timer(rospy.Duration(2),lambda ev: pub_capt.publish(mTrue),oneshot=True)
       else:
          print("Finished, reload next stack")
