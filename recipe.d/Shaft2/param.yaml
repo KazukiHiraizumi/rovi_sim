@@ -14,7 +14,7 @@ picker:
     min: 0
   fitness:
     max: 1
-    min: 0.65
+    min: 0.6
   rmse:
     max: 5
     min: 0
@@ -44,12 +44,12 @@ rovi:
     projector:
       Intensity: 255
 rsim:
-  org_rx: 0.0
+  org_rx: -15
   org_ry: 0
   org_rz: 0.0
   org_x: 0
-  org_y: 0
-  org_z: 500.0
+  org_y: -300
+  org_z: 800.0
   wd: 500
 searcher:
   cutter:
@@ -59,9 +59,9 @@ searcher:
     width: 5
   distance_threshold: 10
   feature_mesh: 4
-  feature_radius: 18
+  feature_radius: 15
   icp_threshold: 3
   normal_min_nn: 5
-  normal_radius: 9
+  normal_radius: 8
   repeat: 1
   rotate: 0
