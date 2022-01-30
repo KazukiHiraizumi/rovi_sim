@@ -20,12 +20,14 @@ Param={
       [0,0,800,0,0,0],
       [0,120,800,0,0,0],
       [0,240,800,0,0,0],
-      [0,300,800,15,0,0]],
+      [0,300,790,10,0,0],
+      [0,300,770,20,0,0],],
   "pos2":[
       [0,-120,800,0,0,0],
       [0,-240,800,0,0,0],
-      [0,-300,800,-15,0,0]],
-  "zshift":[0,60,120,180,240],
+      [0,-300,790,-10,0,0],
+      [0,-300,770,-20,0,0]],
+  "zshift":[0,80,160,240],
 }
 Config={
 }
@@ -114,11 +116,16 @@ def prog1(f):
     if yindex<len(Param["pos1"]):
       captMov()
       retry=0
+      rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else: entry2()
   elif(f):
-    if yindex==len(Param["pos1"])-1: pub_pick2.publish(mTrue)  #VT move
-    else: pub_pick1.publish(mTrue)  #VT move
+    if stats["margin"][1]!=0:
+      print("auto pick2")
+      pub_pick2.publish(mTrue)  #VT move
+    else:
+      print("auto pick1")
+      pub_pick1.publish(mTrue)  #VT move
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
   elif retry<3:
@@ -141,6 +148,7 @@ def prog2(f):
     if yindex<len(Param["pos2"]):
       captMov()
       retry=0
+      rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
       zindex=zindex+1
@@ -150,8 +158,12 @@ def prog2(f):
         print("Finished, reload next stack")
         rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
   elif(f):
-    if yindex==len(Param["pos2"])-1: pub_pick2.publish(mTrue)  #VT move
-    else: pub_pick1.publish(mTrue)  #VT move
+    if stats["margin"][1]!=0:
+      print("auto pick2")
+      pub_pick2.publish(mTrue)  #VT move
+    else:
+      print("auto pick1")
+      pub_pick1.publish(mTrue)  #VT move
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
   elif retry<3:

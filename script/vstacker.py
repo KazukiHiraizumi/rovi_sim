@@ -168,6 +168,8 @@ def chkdist(Ts):
   bTx=bTm.dot(mTs).dot(mTx)
 #  bTx=bTm.dot(mTs).dot(bTm.I)
   d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
+  print("axis",bTx[:3,3])
+  print("wp",Ts[:,:3,3])
   print("dist",d)
   nd=np.argmin(d)
   pub_report.publish(str({'Gx':Ts[nd][0,3],'Gy':Ts[nd][1,3],'Gz':Ts[nd][2,3]}))
@@ -223,20 +225,20 @@ def cb_pick2(msg):
     mError.data=9020
     pub_err.publish(mError)
     return
-#  if n<int(len(tos["xo"]/3)):
-#    if any(tos["xo"][n+1:n+3]):
-#      mError.data=9021
-#      pub_err.publish(mError)
-#      return
-#  elif n>int(len(tos["xo"]*2/3)):
-#    if any(tos["xo"][n-3:n-1]):
-#      mError.data=9022
-#      pub_err.publish(mError)
-#      return
-#  else:
-#    mError.data=9023
-#    pub_err.publish(mError)
-#    return
+  if n<int(len(tos["xo"]/3)):
+    if any(tos["xo"][n+1:n+2]):
+      mError.data=9021
+      pub_err.publish(mError)
+      return
+  elif n>int(len(tos["xo"]*2/3)):
+    if any(tos["xo"][n-2:n-1]):
+      mError.data=9022
+      pub_err.publish(mError)
+      return
+  else:
+    mError.data=9023
+    pub_err.publish(mError)
+    return
   tos["xo"][n]=False
   if not any(tos["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)
@@ -274,7 +276,7 @@ except Exception as e:
 rospy.Subscriber("/rsim/place",Bool,cb_place)
 rospy.Subscriber("/rsim/place1",Bool,cb_place1)
 rospy.Subscriber("/rsim/pick1",Bool,cb_pick1)
-rospy.Subscriber("/rsim/pick2",Bool,cb_pick1)
+rospy.Subscriber("/rsim/pick2",Bool,cb_pick2)
 rospy.Subscriber("/rsim/pick3",Bool,cb_pick3)
 rospy.Subscriber("/rsim/clear",Bool,cb_clear)
 rospy.Subscriber("/request/redraw",Bool,cb_redraw)
