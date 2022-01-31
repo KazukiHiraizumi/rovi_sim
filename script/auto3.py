@@ -120,23 +120,23 @@ def entry0():
     print("Finished, reload next stack")
     rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
 
-def entry1():
+def entry12():
   global retry,merge,mode,nmode,yindex,zindex
-  if mode!=0:
+  if mode==1 or mode==2:
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
   rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-  mode=1
   yindex=0
   nmode=nmode+1
 
+def entry1():
+  global mode
+  entry12()
+  mode=1
+
 def entry2():
-  global retry,merge,mode,nmode,yindex,zindex
-  if mode!=0:
-    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
-  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+  global mode
+  entry12()
   mode=2
-  yindex=0
-  nmode=nmode+1
 
 def prog0(f):
   global retry,merge,mode,nmode,yindex,zindex
@@ -162,16 +162,18 @@ def prog0(f):
     else:
       entry2()
 
-def prog1(f):
+def prog12(f):
   global retry,merge,mode,nmode,yindex,zindex
   if stats["volume"][1]!=0:  #points few
-    print("Mode1 points too few")
+    print("Mode12 points too few")
     yindex=yindex+1
     if yindex<len(Param["pos1"]):
       rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
-      if nmode==2: entry2()
+      if nmode==2:
+        if mode==1: entry2()
+        else: entry1()
       else: entry0()
   elif(f):
     if stats["margin"][1]!=0:
@@ -192,47 +194,16 @@ def prog1(f):
       captMov()
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
-      if nmode==2: entry2()
-      else: entry0()
-
-def prog2(f):
-  global retry,mode,nmode,yindex,zindex
-  if stats["volume"][1]!=0:  #points few
-    print("Mode2 points too few")
-    yindex=yindex+1
-    if yindex<len(Param["pos2"]):
-      rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
-      rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-    else:
-      if nmode==2: entry1()
-      else: entry0()
-  elif(f):
-    if stats["margin"][1]!=0:
-      print("auto pick2")
-      pub_pick2.publish(mTrue)  #VT move
-    else:
-      print("auto pick1")
-      pub_pick1.publish(mTrue)  #VT move
-    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
-    rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-  elif retry<3:
-    retry=retry+1
-    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True) #X2
-  else:
-    yindex=yindex+1
-    if yindex<len(Param["pos2"]):
-      retry=0
-      captMov()
-      rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-    else:
-      if nmode==2: entry1()
+      if nmode==2:
+        if mode==1: entry2()
+        else: entry1()
       else: entry0()
 
 def cb_solve(msg):
   global bTc,retry,mode,yindex,zindex
   if mode==0: prog0(msg.data)
-  elif mode==1: prog1(msg.data)
-  elif mode==2: prog2(msg.data)
+  elif mode==1: prog12(msg.data)
+  elif mode==2: prog12(msg.data)
 
 def cb_error(msg):
   global error
