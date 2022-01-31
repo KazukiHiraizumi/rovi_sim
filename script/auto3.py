@@ -16,26 +16,28 @@ from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
 Param={
+  "pos0":[0,0,800,0,0,0],
   "pos1":[
-      [0,0,800,0,0,0],
       [0,120,800,0,0,0],
-      [0,240,800,0,0,0],
-      [0,300,790,10,0,0],
-      [0,300,770,20,0,0],],
+      [0,160,800,10,0,0],
+      [0,280,800,10,0,0],
+      [0,300,800,20,0,0],],
   "pos2":[
       [0,-120,800,0,0,0],
-      [0,-240,800,0,0,0],
-      [0,-300,790,-10,0,0],
-      [0,-300,770,-20,0,0]],
+      [0,-160,800,-10,0,0],
+      [0,-280,800,-10,0,0],
+      [0,-300,800,-20,0,0]],
   "zshift":[0,80,160,240],
 }
 Config={
 }
 
-mode=1   #1:scan+, 2:scan-
+mode=0   #0:center, 1:scan+, 2:scan-
+nmode=0
 yindex=0
 zindex=0
 retry=0
+merge=0
 error=0
 lot=0
 stats={}
@@ -61,64 +63,116 @@ def mov(Tc):
 def captMov():
   global bTc
   bTc=np.eye(4)
-  if mode==1:
+  if mode==0:
+    pos=Param["pos0"]
+  elif mode==1:
     pos=Param["pos1"][yindex]
   elif mode==2:
     pos=Param["pos2"][yindex]
   bTc[0,3]=pos[0]
   bTc[1,3]=pos[1]
-  bTc[2,3]=pos[2]-Param["zshift"][zindex]
+  bTc[2,3]=pos[2]-Param["zshift"][zindex]-merge*40
   bTc[:3,:3]=R.from_euler('X',pos[3],degrees=True).as_matrix()
   mov(bTc)
 
 def cb_start(msg):
   global bTc,lot,mode,yindex,zindex,retry
-  mode=1   #1:scan mid,2:scan edge
+  mode=0   #0 center, 1:scan mid,2:scan edge
   yindex=0
   zindex=0
   retry=0
-  entry1()
+  merge=0
+  nmode=0
+  entry0()
   if lot>0: pub_place.publish(mTrue)    #place a new bucket
   lot=lot+1
   print("auto lot",lot)
 
+def cb_clear(msg):
+  global merge,retry
+  print("cb_clear")
+  merge=0
+  retry=0
+  captMov()
+
 def cb_capture(msg):
+  global merge
   if(msg.data):
-    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)  #X2
+    merge=merge+1
+    if merge<3:
+      rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)  #X2
+    else:
+      err=Int32()
+      err.data=10000
+      pub_error.publish(err)
   else:
     print("capture failed")
 
+def entry0():
+  global retry,merge,mode,nmode,yindex,zindex
+  zindex=0 if mode==0 else zindex+1
+  if zindex<len(Param["zshift"]):
+    mode=0
+    nmode=1
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+    rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+  else:
+    print("Finished, reload next stack")
+    rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
+
 def entry1():
-  global retry,mode,yindex,zindex
+  global retry,merge,mode,nmode,yindex,zindex
+  if mode!=0:
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
   mode=1
   yindex=0
-  retry=0
-  captMov()
-#  rospy.set_param('/prepro/crop_edge',True)
-  rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
-  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+  nmode=nmode+1
 
 def entry2():
-  global bTc,retry,mode,yindex,zindex
+  global retry,merge,mode,nmode,yindex,zindex
+  if mode!=0:
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
   mode=2
   yindex=0
-  retry=0
-  captMov()
-#  rospy.set_param('/prepro/crop_edge',False)
-  rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
-  rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+  nmode=nmode+1
+
+def prog0(f):
+  global retry,merge,mode,nmode,yindex,zindex
+  if stats["volume"][1]!=0:  #points few
+    print("Mode0 points too few")
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+    entry1()
+  elif(f):
+    if stats["margin"][1]!=0:
+      print("auto pick2")
+      pub_pick2.publish(mTrue)  #VT move
+    else:
+      print("auto pick1")
+      pub_pick1.publish(mTrue)  #VT move
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+    rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+  elif retry<3:
+    retry=retry+1
+    rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True) #X2
+  else:
+    if stats["margin"][0]>0:
+      entry1()
+    else:
+      entry2()
 
 def prog1(f):
-  global retry,mode,yindex,zindex
+  global retry,merge,mode,nmode,yindex,zindex
   if stats["volume"][1]!=0:  #points few
     print("Mode1 points too few")
     yindex=yindex+1
     if yindex<len(Param["pos1"]):
-      captMov()
-      retry=0
       rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-    else: entry2()
+    else:
+      if nmode==2: entry2()
+      else: entry0()
   elif(f):
     if stats["margin"][1]!=0:
       print("auto pick2")
@@ -134,29 +188,24 @@ def prog1(f):
   else:
     yindex=yindex+1
     if yindex<len(Param["pos1"]):
-      captMov()
       retry=0
+      captMov()
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
-      entry2()
+      if nmode==2: entry2()
+      else: entry0()
 
 def prog2(f):
-  global retry,mode,yindex,zindex
+  global retry,mode,nmode,yindex,zindex
   if stats["volume"][1]!=0:  #points few
     print("Mode2 points too few")
     yindex=yindex+1
     if yindex<len(Param["pos2"]):
-      captMov()
-      retry=0
       rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
-      zindex=zindex+1
-      if zindex<len(Param["zshift"]):
-        entry1()
-      else:
-        print("Finished, reload next stack")
-        rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
+      if nmode==2: entry1()
+      else: entry0()
   elif(f):
     if stats["margin"][1]!=0:
       print("auto pick2")
@@ -172,21 +221,18 @@ def prog2(f):
   else:
     yindex=yindex+1
     if yindex<len(Param["pos2"]):
-      captMov()
       retry=0
+      captMov()
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
     else:
-      zindex=zindex+1
-      if zindex<len(Param["zshift"]):
-        entry1()
-      else:
-        print("Finished, reload next stack")
-        rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
+      if nmode==2: entry1()
+      else: entry0()
 
 def cb_solve(msg):
   global bTc,retry,mode,yindex,zindex
-  if mode==1: prog1(msg.data)
-  else: prog2(msg.data)
+  if mode==0: prog0(msg.data)
+  elif mode==1: prog1(msg.data)
+  elif mode==2: prog2(msg.data)
 
 def cb_error(msg):
   global error
@@ -207,6 +253,7 @@ try:
 except Exception as e:
   print("get_param exception:",e.args)
 ###Topics
+rospy.Subscriber("/request/clear",Bool,cb_clear) #In place of "/response/clear" because no one responses to it
 rospy.Subscriber("/response/capture",Bool,cb_capture)
 rospy.Subscriber("/response/solve",Bool,cb_solve)
 rospy.Subscriber("/rsim/error",Int32,cb_error)
