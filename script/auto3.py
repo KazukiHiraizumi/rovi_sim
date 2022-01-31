@@ -71,7 +71,7 @@ def captMov():
     pos=Param["pos2"][yindex]
   bTc[0,3]=pos[0]
   bTc[1,3]=pos[1]
-  bTc[2,3]=pos[2]-Param["zshift"][zindex]-merge*40
+  bTc[2,3]=pos[2]-Param["zshift"][zindex] #-merge*40
   bTc[:3,:3]=R.from_euler('X',pos[3],degrees=True).as_matrix()
   mov(bTc)
 
@@ -93,7 +93,6 @@ def cb_clear(msg):
   print("cb_clear")
   merge=0
   retry=0
-  captMov()
 
 def cb_capture(msg):
   global merge
@@ -101,7 +100,7 @@ def cb_capture(msg):
     merge=merge+1
     if merge<3:
       rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True)  #X2
-    else:
+    else: #exit: terminate
       err=Int32()
       err.data=10000
       pub_error.publish(err)
@@ -116,14 +115,13 @@ def entry0():
     nmode=1
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
     rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
+    captMov()
   else:
     print("Finished, reload next stack")
     rospy.Timer(rospy.Duration(5),cb_start,oneshot=True)
 
 def entry12():
   global retry,merge,mode,nmode,yindex,zindex
-  if mode==1 or mode==2:
-    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
   rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
   yindex=0
   nmode=nmode+1
@@ -132,15 +130,17 @@ def entry1():
   global mode
   entry12()
   mode=1
+  captMov()
 
 def entry2():
   global mode
   entry12()
   mode=2
+  captMov()
 
 def prog0(f):
   global retry,merge,mode,nmode,yindex,zindex
-  if stats["volume"][1]!=0:  #points few
+  if stats["volume"][1]!=0:  #exit:points few
     print("Mode0 points too few")
     rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
     entry1()
@@ -156,7 +156,7 @@ def prog0(f):
   elif retry<3:
     retry=retry+1
     rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True) #X2
-  else:
+  else:  #exit:solve error
     if stats["margin"][0]>0:
       entry1()
     else:
@@ -164,13 +164,15 @@ def prog0(f):
 
 def prog12(f):
   global retry,merge,mode,nmode,yindex,zindex
+  ylen=len(Param["pos1"]) if mode==1 else len(Param["pos2"])
   if stats["volume"][1]!=0:  #points few
     print("Mode12 points too few")
+    rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
     yindex=yindex+1
-    if yindex<len(Param["pos1"]):
-      rospy.Timer(rospy.Duration(1),lambda ev: pub_clear.publish(mTrue),oneshot=True)  #X0
+    if yindex<ylen:
+      captMov()
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-    else:
+    else: #exit: bucket end
       if nmode==2:
         if mode==1: entry2()
         else: entry1()
@@ -189,15 +191,18 @@ def prog12(f):
     rospy.Timer(rospy.Duration(0.1),lambda ev: pub_solve.publish(mTrue),oneshot=True) #X2
   else:
     yindex=yindex+1
-    if yindex<len(Param["pos1"]):
+    if yindex<ylen:
       retry=0
       captMov()
       rospy.Timer(rospy.Duration(5),lambda ev: pub_capt.publish(mTrue),oneshot=True)  #X1
-    else:
-      if nmode==2:
-        if mode==1: entry2()
-        else: entry1()
-      else: entry0()
+    else: #exit: terminate
+      err=Int32()
+      err.data=10000+mode
+      pub_error.publish(err)
+#      if nmode==2:
+#        if mode==1: entry2()
+#        else: entry1()
+#      else: entry0()
 
 def cb_solve(msg):
   global bTc,retry,mode,yindex,zindex
