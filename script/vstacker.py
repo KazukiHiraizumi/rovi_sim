@@ -26,7 +26,7 @@ Config={
   "range_x":50,
   "range_y":1000,
   "margin_y":100,
-  "solve_frame_id":"camera/capture0/solve0",
+  "solve_frame_id":"camera/capture0/solve0/revolve",
   "master_frame_id":"camera/master0",
   "journal_frame_id":"camera/master0/journal",
   "bucket_frame_id":"bucket",
