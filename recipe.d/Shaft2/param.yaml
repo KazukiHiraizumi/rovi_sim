@@ -63,20 +63,20 @@ rovi:
     projector:
       Intensity: 255
 rsim:
-  org_rx: 0.0
+  org_rx: 0
   org_ry: 180
   org_rz: 0.0
   org_x: 800
-  org_y: 60.0
-  org_z: 900.0
+  org_y: 180.0
+  org_z: 870.0
   wd: 500
 searcher:
   cutter:
-    base: -220
-    crop: 11
-    distance: 500
+    base: -320
+    crop: 9
+    distance: 400
     offset: 435
-    width: 5
+    width: 7
   distance_threshold: 10
   feature_mesh: 4
   feature_radius: 15

@@ -160,17 +160,25 @@ def cb_place1(msg):
   cb_redraw(0)
   cb_clear(0)
 
+def xdist(bTp,bTx):  #distance (0,0,0)=>ex
+  pTx=np.linalg.inv(bTp).dot(bTx)
+  s=pTx[:3].T[3]  #translation vector
+  ex=pTx[:3].T[0]  #base x vector
+  print('org',s,ex)
+  d=s-np.inner(s,ex)*ex
+  return np.linalg.norm(d)
+
 def chkdist(Ts):
   global mError
   mTs=getRT(Config["master_frame_id"],Config["solve_frame_id"])
   bTm=getRT(Config["bucket_frame_id"],Config["master_frame_id"])
   mTx=getRT(Config["master_frame_id"],Config["journal_frame_id"]) #i.e. solve->journal(sTx)
   bTx=bTm.dot(mTs).dot(mTx)
-#  bTx=bTm.dot(mTs).dot(bTm.I)
-  d=np.linalg.norm(Ts[:,:3,3].T-bTx[:3,3],axis=0)
-  print("axis",bTx[:3,3])
-  print("wp",Ts[:,:3,3])
-  print("dist",d)
+#  print("solve axis",bTx[:3,3])
+#  print("scene axises",Ts[:,:3,3])
+  d=map(lambda T:xdist(T,bTx),Ts)
+  d=np.array(list(d))
+  print("dist",np.array(d))
   nd=np.argmin(d)
   pub_report.publish(str({'Gx':Ts[nd][0,3],'Gy':Ts[nd][1,3],'Gz':Ts[nd][2,3]}))
   if d[nd]<Config["precision"] and Stack[-1]["xo"][nd]:
