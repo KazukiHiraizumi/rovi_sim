@@ -16,19 +16,20 @@ from geometry_msgs.msg import Transform
 from rovi_utils import tflib
 
 Param={
-  "pos0":[0,0,800,0,0,0],
+  "pos0":[800,0,900,0,180,180],
   "pos1":[
-      [0,120,800,0,0,0],
-      [0,240,800,0,0,0],
-      [0,360,800,0,0,0],
-      [0,400,800,10,0,0]],
+      [800,120,900,0,180,180],
+      [800,240,900,0,180,180],
+      [800,360,900,0,180,180],
+      [800,400,900,-10,180,180]],
   "pos2":[
-      [0,-120,800,0,0,0],
-      [0,-240,800,0,0,0],
-      [0,-360,800,0,0,0],
-      [0,-400,800,-10,0,0]],
+      [800,-120,900,0,180,180],
+      [800,-240,900,0,180,180],
+      [800,-360,900,0,180,180],
+      [800,-400,900,10,180,180]],
   "zshift":[0,80,160,240],
-  "yshift":[0,60,-60]
+  "yoffset":[0,60,-60],
+  "zoffset":[0,-30,-30],
 }
 Config={
 }
@@ -83,8 +84,8 @@ def captMov():
   elif mode==2:
     pos=Param["pos2"][yindex]
   bTc[0,3]=pos[0]
-  bTc[1,3]=pos[1]+Param["yshift"][merge]
-  bTc[2,3]=pos[2]-Param["zshift"][zindex]
+  bTc[1,3]=pos[1]+Param["yoffset"][merge]
+  bTc[2,3]=pos[2]-Param["zshift"][zindex]+Param["zoffset"][merge]
   bTc[:3,:3]=R.from_euler('X',pos[3],degrees=True).as_matrix()
   mov(bTc)
 
@@ -154,7 +155,7 @@ def cb_solve(msg):
   elif retry<3:
     retry=retry+1
     X2(0.1)
-  elif merge<len(Param["yshift"]):
+  elif merge<len(Param["yoffset"]):
     captMov()
     X1(1)
   else: #exit: terminate

@@ -1,3 +1,16 @@
+config_tf:
+  bucket_post0:
+    transform:
+      translation:
+        x: 600
+        y: 420
+        z: 500
+  bucket_post1:
+    transform:
+      translation:
+        x: 600
+        y: -450
+        z: 500
 cropper:
   cropR: 0
   cropR2: 0.08
@@ -27,6 +40,12 @@ picker:
   transY:
     max: 3000
     min: -3000
+prepro:
+  box0_crop: 180
+  box0_depth: 40
+  box0_points: 500
+  box0_width: 60
+  enable: 1
 rovi:
   pshift_genpc:
     calc:
@@ -44,16 +63,17 @@ rovi:
     projector:
       Intensity: 255
 rsim:
-  org_rx: 0
-  org_ry: 0
+  org_rx: 0.0
+  org_ry: 180
   org_rz: 0.0
-  org_x: 0
-  org_y: 0
-  org_z: 800.0
+  org_x: 800
+  org_y: 60.0
+  org_z: 900.0
   wd: 500
 searcher:
   cutter:
     base: -220
+    crop: 11
     distance: 500
     offset: 435
     width: 5

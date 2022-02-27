@@ -63,9 +63,10 @@ def cb_capture(msg):
   zp=np.ravel(scn.T[2])
   scn=scn[np.abs(yp/zp)<Config["trim_y"]/Config["trim_far"]]
   print("vcam trimmed",scn.shape)
-  if len(scn)<5000:
+  if len(scn)<1000:
     print("vcam points too few, abort hidden...",len(scn))
     pub_ps.publish(np2F(scn))
+    pub_done.publish(mTrue)
     return  
   pcd=o3d.geometry.PointCloud()
   pcd.points=o3d.utility.Vector3dVector(scn)
@@ -76,6 +77,7 @@ def cb_capture(msg):
   plst=np.array(list(pset))
   pcd=pcd.select_by_index(plst)
   pub_ps.publish(np2F(np.array(pcd.points)))
+  pub_done.publish(mTrue)
 
 ########################################################
 rospy.init_node("vcam",anonymous=True)
@@ -89,9 +91,13 @@ except Exception as e:
 rospy.Subscriber("/rovi/wp_floats",numpy_msg(Floats),cb_ps)
 rospy.Subscriber("/rovi/X1",Bool,cb_capture)
 pub_ps=rospy.Publisher("/rovi/ps_floats",numpy_msg(Floats),queue_size=1)
-###TF
+pub_done=rospy.Publisher("/rovi/Y1",Bool,queue_size=1)
+###Globals
+mTrue=Bool();mTrue.data=True
+mFalse=Bool()
 tfBuffer=tf2_ros.Buffer()
 listener=tf2_ros.TransformListener(tfBuffer)
+Scene=np.array([]).reshape((-1,3))
 
 #if __name__=="__main__":
 #

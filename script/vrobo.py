@@ -35,7 +35,7 @@ def getRT(base,ref):
 
 def mov(pos,relative=False):
   pos.extend([0,0,0])
-  rot=R.from_euler('ZX',pos[3:5],degrees=True)
+  rot=R.from_euler('xyz',pos[3:6],degrees=True)
   Rt=np.eye(4)
   Rt[:3,:3]=rot.as_matrix()
   Rt[:3,3]=np.array(pos[:3]).T
@@ -63,7 +63,7 @@ def cb_org(msg):
   except Exception as e:
     print("get_param exception:",e.args)
   p=Param
-  mov([p["org_x"],p["org_y"],p["org_z"],p["org_rz"],p["org_rx"]])
+  mov([p["org_x"],p["org_y"],p["org_z"],p["org_rx"],p["org_ry"],p["org_rz"]])
 ########################################################
 rospy.init_node("vrobo",anonymous=True)
 thispath=subprocess.getoutput("rospack find rovi_sim")

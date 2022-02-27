@@ -22,11 +22,11 @@ config_tf:
     parent_frame_id: world
     transform:
       rotation:
-        w: 1
+        w: 0
         x: 0
         y: 0
-        z: 0
+        z: 1
       translation:
-        x: 0
+        x: 800
         y: -25
         z: 0

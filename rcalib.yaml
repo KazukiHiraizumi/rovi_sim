@@ -2,11 +2,11 @@ config_tf:
   camera:
     transform:
       rotation:
-        w: 0
-        x: 0
-        y: 1
-        z: 0
-      translation:
+        w: 1
         x: 0
         y: 0
         z: 0
+      translation:
+        x: 100
+        y: 0
+        z: 100
