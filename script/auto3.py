@@ -144,7 +144,7 @@ def cb_solve(msg):
   global mode,retry,merge,yindex,zindex
   print("cb_solve",mode,stats)
   if msg.data:
-    if stats["margin"]<150:
+    if stats["prob_m"]<150:
       print("auto pick2")
       pub_pick2.publish(mTrue)  #VT move
     else:

@@ -19,8 +19,8 @@ from rovi_utils import tflib
 Config={
   "source_frame_id":"bucket",
   "target_frame_id":"camera",
-  "trim_x":800,
-  "trim_y":300,
+  "trim_x":600,
+  "trim_y":600,
   "trim_far":600,
   "trim_near":300,
   "view":[[-200,0,0],[200,0,0]],
@@ -62,6 +62,9 @@ def cb_capture(msg):
   yp=np.ravel(scn.T[1])
   zp=np.ravel(scn.T[2])
   scn=scn[np.abs(yp/zp)<Config["trim_y"]/Config["trim_far"]]
+  xp=np.ravel(scn.T[0])
+  zp=np.ravel(scn.T[2])
+  scn=scn[np.abs(xp/zp)<Config["trim_x"]/Config["trim_far"]]
   print("vcam trimmed",scn.shape)
   if len(scn)<1000:
     print("vcam points too few, abort hidden...",len(scn))

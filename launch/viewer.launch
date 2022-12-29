@@ -1,5 +1,6 @@
 <launch>
   <include file="$(find rovi_csp)/launch/viewer.launch">
     <arg name="rviz_conf" value="$(find rovi_sim)/main.rviz" />
+    <arg name="ws" value="$(find rovi_sim)" />
   </include>
 </launch>

@@ -2,15 +2,17 @@ config:
   vstacker:
     model: test/shaft_2.ply
     environ: test/env.ply
+#    environ: test/990.ply
     layers: 3
     dmin: 100
     range_x: 50
     range_y: 930
     margin_y: 110
     env_tr: [0,0,-190, 0,0,.707,.707]
+#    env_tr: [-1020.5411147659794,402.9161051810155,396.401546857407,0.6751932568267953,0.7375204196451393,0.006484503891411039,-0.011646791461927318]
   vcam:
-    trim_y: 300
-    trim_x: 1000
+    trim_y: 1000
+    trim_x: 300
     frame_id: camera
   vrobo:
     org: [0,0,500]
@@ -27,6 +29,42 @@ config_tf:
         y: 0
         z: 1
       translation:
-        x: 800
-        y: -25
+        x: 0  #800
+        y: 0  #-25
         z: 0
+  prepro:
+    transform:
+      rotation:
+        w: 0.707
+        x: 0
+        y: 0
+        z: -0.707
+      translation:
+        x: -252
+        y: 483
+        z: 0
+  preproV1:
+    parent_frame_id: prepro
+    transform:
+      translation:
+        x: 250
+        y: 100
+        z: -150
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+  preproV2:
+    parent_frame_id: prepro
+    transform:
+      translation:
+        x: 750
+        y: 100
+        z: -150
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+

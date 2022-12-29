@@ -1,6 +1,6 @@
 config:
   dashboard:
-    load: rovi_visual_teach/rc.d/ur.yaml
+#    load: rovi_visual_teach/rc.d/ur.yaml
     recipe:
       link: rovi_sim/recipe
       dir: rovi_sim/recipe.d
@@ -35,6 +35,8 @@ config:
       label: "セットアップ"
       package: rovi_sim
       file: setup.launch
+      pre: "wmctrl -r rviz -e 0,0,0,1000,600"
+      post: "wmctrl -r rviz -e 0,0,0,1366,600"
     launch_viewer:
       label: "Viewer"
       package: rovi_sim

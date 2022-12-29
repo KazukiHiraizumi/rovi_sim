@@ -25,6 +25,8 @@ Config={
   "dmin":100,
   "range_x":50,
   "range_y":1000,
+  "range_ry":0.15,
+  "range_rz":0.3,
   "margin_y":100,
   "solve_frame_id":"camera/capture0/solve0/revolve",
   "master_frame_id":"camera/master0",
@@ -93,7 +95,7 @@ def alayer(base,offset):
 def toRT(cod):
   tr=np.eye(4)
   tr[:,3]=np.append(cod,[1]).T
-  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,0,0]))
+  R=rot.from_rotvec(np.array([np.pi*np.random.rand()*2,Config["range_ry"]*(np.random.rand()-0.5),Config["range_rz"]*(np.random.rand()-0.5)]))
   tr[:3,:3]=R.as_matrix()
   return np.asmatrix(tr)
 
@@ -160,11 +162,18 @@ def cb_place1(msg):
   cb_redraw(0)
   cb_clear(0)
 
+def cb_place0(msg):
+  global Scene,Stack
+  Scene=mkscene(Pcd,[])
+  Stack=[]
+  cb_redraw(0)
+  cb_clear(0)
+
 def xdist(bTp,bTx):  #distance (0,0,0)=>ex
   pTx=np.linalg.inv(bTp).dot(bTx)
   s=pTx[:3].T[3]  #translation vector
   ex=pTx[:3].T[0]  #base x vector
-  print('org',s,ex)
+#  print('org',s,ex)
   d=s-np.inner(s,ex)*ex
   return np.linalg.norm(d)
 
@@ -189,18 +198,13 @@ def chkdist(Ts):
     print("dist err",d[nd])
     return -1
 
-def cb_pick1(msg):
-  global Scene,Stack,mError
-  if mError.data>0:
-    pub_err.publish(mError)
-    return
-  tos=Stack[-1]
+def pick1(tos):
   n=chkdist(tos["tf"])
   print("pick1",n,len(tos["tf"]))
   if n<0:
     mError.data=9010
     pub_err.publish(mError)
-    return
+    return False
   cy=tos["tf"][n][1,3]
   print("Cy ",cy)
   ry=Config["range_y"]/2-Config["margin_y"]
@@ -209,17 +213,27 @@ def cb_pick1(msg):
     if any(tos["xo"][n+1:n+4]):
       mError.data=9011
       pub_err.publish(mError)
-      return
+      return True
   if cy>ry:
     print("Hashi pick + ",cy)
     if any(tos["xo"][n-4:n-1]):
       mError.data=9012
       pub_err.publish(mError)
-      return
+      return True
   tos["xo"][n]=False
-  if not any(tos["xo"]): Stack.pop(-1)
+  return True
+
+def cb_pick1(msg):
+  global Scene,Stack,mError
+  if mError.data>0:
+    pub_err.publish(mError)
+    return
+  if not pick1(Stack[-1]):
+    if len(Stack)>1: pick1(Stack[-2])
+  if not any(Stack[-1]["xo"]): Stack.pop(-1)
   Scene=mkscene(Pcd,Stack)
   cb_redraw(0)
+  return
 
 def cb_pick2(msg):
   global Scene,Stack,mError
@@ -283,6 +297,7 @@ except Exception as e:
 ###Topics
 rospy.Subscriber("/rsim/place",Bool,cb_place)
 rospy.Subscriber("/rsim/place1",Bool,cb_place1)
+rospy.Subscriber("/rsim/place0",Bool,cb_place0)
 rospy.Subscriber("/rsim/pick1",Bool,cb_pick1)
 rospy.Subscriber("/rsim/pick2",Bool,cb_pick2)
 rospy.Subscriber("/rsim/pick3",Bool,cb_pick3)
