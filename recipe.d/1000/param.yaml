@@ -1,19 +1,19 @@
 cropper:
   cropR: 0
-  cropZ: 0
-  cropZup: 700
+  cropZ: -450
+  cropZup: 280
   ladC: 0
   ladW: 0
-  mesh: 0
-  nfmin: 20
-  nfrad: 5
+  mesh: 2
+  nfmin: 0
+  nfrad: 0
 picker:
   azimuth:
-    max: 90
+    max: 180
     min: 0
   fitness:
     max: 1
-    min: 0.6
+    min: 0.66
   rmse:
     max: 5
     min: 0
@@ -27,55 +27,57 @@ picker:
     max: 3000
     min: -3000
 prepro:
-  box0_crop: 180
-  box0_depth: 40
+  box0_crop: 150
+  box0_depth: 20
   box0_low: 100
-  box0_points: 500
-  box0_width: 60
-  bucket_width: 870
-  bucket_yclip: 100
+  box0_points: 700
+  box0_width: 50
+  bucket_height: 300
+  bucket_width: 960
+  bucket_yclip: 170
   enable: 1
-  ss_dist: 500
-  ss_ry: 30
+  ss_dist: -330
+  ss_ry: 15
 revolver:
   deg: 0
+  enable: 1
 rovi:
   pshift_genpc:
     calc:
       bw_diff: 8
       darkness: 5
   ycam:
-    ExposureTimeLevel: 3
+    ExposureTimeLevel: 5
     camera:
-      Gain: 80
+      Gain: 0
     hdr:
       enabled: false
       pcgen_publish: false
       projector:
         Intensity: 0.2
     projector:
-      Intensity: 255
+      Intensity: 250
 rsim:
   org_rx: 0
   org_ry: 180
   org_rz: 90
-  org_x: 800
-  org_y: 50
-  org_z: 500
-  wd: 500
+  org_x: 200
+  org_y: 0
+  org_z: 600
+  wd: 0
 searcher:
   cutter:
-    align: x
-    base: -320
-    crop: 9
-    distance: 400
-    offset: 435
+    align: y
+    base: -80
+    crop: -5
+    distance: 500
+    offset: 85
     width: 7
-  distance_threshold: 10
+  distance_threshold: 18
   feature_mesh: 4
-  feature_radius: 15
+  feature_radius: 9
   icp_threshold: 3
   normal_min_nn: 5
-  normal_radius: 8
+  normal_radius: 9
   repeat: 1
   rotate: 0

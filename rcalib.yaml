@@ -7,6 +7,6 @@ config_tf:
         y: 0
         z: 0
       translation:
-        x: 100
+        x: 0
         y: 0
-        z: 100
+        z: 0

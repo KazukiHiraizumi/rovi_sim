@@ -1,4 +1,5 @@
 <launch>
+  <rosparam command="load" file="$(find rovi_sim)/config.yaml" />
   <include file="$(find rovi_csp)/launch/vt.launch">
     <arg name="ws" value="$(find rovi_sim)" />
   </include>
