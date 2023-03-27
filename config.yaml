@@ -1,18 +1,25 @@
 config:
   vstacker:
     model: test/shaft_2.ply
-#    environ: test/env.ply
-#    env_tr: [0,0,-190, 0,0,0.707,0.707]        #Tr from bucket
-    environ: test/test.ply
-    env_tr: [300,50,1000,0.707,0.707,0.0,0.0]   #Tr from bucket
+    bucket_model: test/env.ply
+    bucket_tr: [0,0,-190, 0,0,0.707,0.707]  #Tr on bucket
+    work_model: test/test.ply
+    work_tr: [300,50,1000,0.707,0.707,0,0]   #Tr on bucket
+#    work_model: test/shaft_2.ply
+#    work_tr: [-70,0,70,0,0,0,1]   #Tr on bucket
+#    cv_model: test/cv.ply
+#    cv_tr: [0,-900,400, 0,1,0,0]
+    cv_model: test/shaft_2.ply
+    cv_tr: [0,-900,-100, 0,0,0.707,0.707]
     layers: 3
     dmin: 100
     range_x: 50
     range_y: 930
     margin_y: 110
   vcam:
-    trim_y: 1000
-    trim_x: 300
+    trim_far: 1000
+    trim_y: 500
+    trim_x: 600
     frame_id: camera
   vrobo:
     org: [0,0,500]

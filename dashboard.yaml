@@ -34,7 +34,7 @@ config:
       label: "セットアップ"
       package: rovi_sim
       file: setup.launch
-      pre: "wmctrl -r rviz -e 0,0,0,1550,875"
+      pre: ["wmctrl -r rviz -e 0,0,0,1550,875"]
       auto: 13
     launch_viewer:
       label: "Viewer"
@@ -64,6 +64,11 @@ config:
     indicator4:
       label: "解析"
       topic: /searcher/stat
+      type: std_msgs/Bool
+      timeout: 2
+    indicator5:
+      label: "残量少"
+      topic: /diskfree/stat
       type: std_msgs/Bool
       timeout: 2
   panel:

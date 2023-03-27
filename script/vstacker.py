@@ -33,7 +33,12 @@ Config={
   "journal_frame_id":"camera/master0/journal",
   "bucket_frame_id":"bucket",
   "precision":5,
-  "env_tr":[0,0,-190, 0,0,.707,.707]
+  "bucket_model":"",
+  "bucket_tr":[0,0,-190, 0,0,.707,.707],  #tr from bucket
+  "work_model":"",
+  "work_tr":[0,0,-190, 0,0,.707,.707],  #tr from bucket
+  "cv_model":"",
+  "cv_tr":[20,-935,411, -0.0129,-0.999,-0.005,-0.002]  #tr from base
 }
 
 def np2F(d):  #numpy to Floats
@@ -204,7 +209,7 @@ def pick1(tos):
   if n<0:
     mError.data=9010
     pub_err.publish(mError)
-    return False
+    return FalsePcd
   cy=tos["tf"][n][1,3]
   print("Cy ",cy)
   ry=Config["range_y"]/2-Config["margin_y"]
@@ -268,6 +273,29 @@ def cb_pick2(msg):
 
 def cb_pick3(msg):
   pass
+
+def cb_loadPcd(ev):
+  global Pcd
+  pModel=o3d.io.read_point_cloud(thispath+'/'+Config['model'])
+  pEnv=o3d.geometry.PointCloud()
+
+  pc=o3d.io.read_point_cloud(thispath+'/'+Config['bucket_model'])
+  pc.transform(tflib.toRTfromVec(Config["bucket_tr"]))
+  print("bucket",pc)
+  pEnv+=pc
+
+  pc=o3d.io.read_point_cloud(thispath+'/'+Config['work_model'])
+  pc.transform(tflib.toRTfromVec(Config["work_tr"]))
+  print("work",pc)
+  pEnv+=pc
+
+  pc=o3d.io.read_point_cloud(thispath+'/'+Config['cv_model'])
+  pc.transform(getRT(Config["bucket_frame_id"],"base").dot(tflib.toRTfromVec(Config["cv_tr"])))
+  print("cv",pc)
+  pEnv+=pc
+
+  Pcd=[pModel,pEnv]
+
 def cb_clear(msg):
   global mError
   mError.data=0
@@ -313,14 +341,8 @@ listener=tf2_ros.TransformListener(tfBuffer)
 mError=Int32()
 Scene=[]  #will be point cloud ndarray as [[x,y,z]...]
 Stack=[]  #will be as [{"tf":[...],"xo":[...],"wp":[...]}...]
-Pcd=[]
-Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['model']))
-Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['environ']))
-#Pcd.append(o3d.io.read_point_cloud(thispath+'/'+Config['diff']))
-if len(Pcd)>1:
-  Pcd[-1].transform(tflib.toRTfromVec(Config["env_tr"]))
-#if __name__=="__main__":
-#
+
+rospy.Timer(rospy.Duration(10),cb_loadPcd,oneshot=True)
 
 try:
   rospy.spin()

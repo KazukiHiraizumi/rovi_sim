@@ -19,10 +19,10 @@ from rovi_utils import tflib
 Config={
   "source_frame_id":"bucket",
   "target_frame_id":"camera",
-  "trim_x":600,
-  "trim_y":600,
-  "trim_far":600,
-  "trim_near":300,
+  "trim_x":1000,
+  "trim_y":1000,
+  "trim_far":1000,
+  "trim_near":100,
   "view":[[-200,0,0],[200,0,0]],
   "view_r":50000,
 }
