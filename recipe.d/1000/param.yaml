@@ -1,12 +1,14 @@
 cropper:
   cropR: 0
-  cropZ: -450
+  cropR2: 0.08
+  cropZ: -500
   cropZup: 280
   ladC: 0
   ladW: 0
-  mesh: 2
+  mesh: 0
   nfmin: 0
   nfrad: 0
+  wd: 0
 picker:
   azimuth:
     max: 180
@@ -27,16 +29,16 @@ picker:
     max: 3000
     min: -3000
 prepro:
-  box0_crop: 150
-  box0_depth: 20
-  box0_low: 100
-  box0_points: 700
-  box0_width: 50
+  box0_crop: 100
+  box0_mask: 7
+  box0_points: 200
+  box0_step: 10
+  box0_width: 40
   bucket_height: 300
   bucket_width: 960
-  bucket_yclip: 170
+  bucket_yclip: 300
   enable: 1
-  ss_dist: -330
+  ss_dist: -750
   ss_ry: 15
 revolver:
   deg: 0
@@ -62,13 +64,13 @@ rsim:
   org_ry: 180
   org_rz: 90
   org_x: 200
-  org_y: 0
-  org_z: 600
+  org_y: -100
+  org_z: 500
   wd: 0
 searcher:
   cutter:
     align: y
-    base: -80
+    base: -25
     crop: -5
     distance: 500
     offset: 85
