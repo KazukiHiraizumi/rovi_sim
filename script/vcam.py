@@ -25,6 +25,7 @@ Config={
   "trim_near":100,
   "view":[[-200,0,0],[200,0,0]],
   "view_r":50000,
+  "hidden":False
 }
 
 def np2F(d):  #numpy to Floats
@@ -73,12 +74,13 @@ def cb_capture(msg):
     return  
   pcd=o3d.geometry.PointCloud()
   pcd.points=o3d.utility.Vector3dVector(scn)
-  pset=set([])
-  for v in Config["view"]:
-    _, pm=pcd.hidden_point_removal(v,Config["view_r"])
-    pset=pset.union(set(pm))
-  plst=np.array(list(pset))
-  pcd=pcd.select_by_index(plst)
+  if Config["hidden"]:
+    pset=set([])
+    for v in Config["view"]:
+      _, pm=pcd.hidden_point_removal(v,Config["view_r"])
+      pset=pset.union(set(pm))
+    plst=np.array(list(pset))
+    pcd=pcd.select_by_index(plst)
   pub_ps.publish(np2F(np.array(pcd.points)))
   pub_done.publish(mTrue)
 

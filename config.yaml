@@ -3,7 +3,9 @@ config:
     model: test/shaft_2.ply
     bucket_model: test/env.ply
     bucket_tr: [0,0,-190, 0,0,0.707,0.707]  #Tr on bucket
-    work_model: test/test.ply
+#    work_model: test/418-0828-2.ply
+#    work_model: test/418-0859-5.ply
+#    work_model: test/419-0907.ply
     work_tr: [300,50,1000,0.707,0.707,0,0]   #Tr on bucket
 #    work_model: test/shaft_2.ply
 #    work_tr: [-70,0,70,0,0,0,1]   #Tr on bucket
@@ -11,7 +13,7 @@ config:
 #    cv_tr: [0,-900,400, 0,1,0,0]
     cv_model: test/shaft_2.ply
     cv_tr: [0,-900,-100, 0,0,0.707,0.707]
-    layers: 3
+    layers: 5
     dmin: 100
     range_x: 50
     range_y: 930
@@ -21,6 +23,7 @@ config:
     trim_y: 500
     trim_x: 600
     frame_id: camera
+    hidden: True
   vrobo:
     org: [0,0,500]
     step_y: 150
