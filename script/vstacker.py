@@ -32,7 +32,7 @@ Config={
   "master_frame_id":"camera/master0",
   "journal_frame_id":"camera/master0/journal",
   "bucket_frame_id":"bucket",
-  "precision":5,
+  "precision":20,
   "bucket_model":"",
   "bucket_tr":[0,0,-190, 0,0,.707,.707],  #tr from bucket
   "work_model":"",
@@ -209,7 +209,7 @@ def pick1(tos):
   if n<0:
     mError.data=9010
     pub_err.publish(mError)
-    return FalsePcd
+    return False
   cy=tos["tf"][n][1,3]
   print("Cy ",cy)
   ry=Config["range_y"]/2-Config["margin_y"]

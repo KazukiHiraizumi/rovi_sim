@@ -18,6 +18,11 @@ config:
       package: rovi_sim
       file: sim.launch
       auto: 1
+    launch_svga:
+      label: "再現"
+      package: rovi_sim
+      file: ana.launch
+#      auto: 1
     launch_rsock:
       label: "ロボット"
       package: rovi_industrial
@@ -70,7 +75,7 @@ config:
       label: "残量少"
       topic: /diskfree/stat
       type: std_msgs/Bool
-      timeout: 2
+      timeout: 60
   panel:
     color:
       background: "#00AAFF"

@@ -25,7 +25,7 @@ Config={
   "trim_near":100,
   "view":[[-200,0,0],[200,0,0]],
   "view_r":50000,
-  "hidden":False
+  "hidden":True
 }
 
 def np2F(d):  #numpy to Floats

@@ -1,0 +1,4 @@
+<launch>
+  <rosparam command="load" file="$(find rovi_sim)/config.yaml" />
+  <node pkg="rovi_sim" type="vloader.py" name="" output="screen" />
+</launch>

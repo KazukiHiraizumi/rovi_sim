@@ -1,12 +1,8 @@
 config:
   vstacker:
     model: test/shaft_2.ply
-    bucket_model: test/env.ply
+#    bucket_model: test/env.ply
     bucket_tr: [0,0,-190, 0,0,0.707,0.707]  #Tr on bucket
-#    work_model: test/418-0828-2.ply
-#    work_model: test/418-0859-5.ply
-#    work_model: test/419-0907.ply
-    work_tr: [300,50,1000,0.707,0.707,0,0]   #Tr on bucket
 #    work_model: test/shaft_2.ply
 #    work_tr: [-70,0,70,0,0,0,1]   #Tr on bucket
 #    cv_model: test/cv.ply
@@ -23,11 +19,17 @@ config:
     trim_y: 500
     trim_x: 600
     frame_id: camera
-    hidden: True
+#    hidden: False
   vrobo:
     org: [0,0,500]
     step_y: 150
     step_z: 15
+  vloader:
+    folder: "/home/ros/デスクトップ/LOG"
+
+rovi:
+  ycam:
+    Mode: 1
 
 config_tf:
   bucket:
@@ -47,12 +49,12 @@ config_tf:
     parent_frame_id: base
     transform:
       translation:
-        x: 254
-        y: 485
-        z: 233
+        x: 840.4
+        y: 393.09
+        z: -129.31
       rotation:
         x: 0
         y: 0
-        z: -0.707
-        w: 0.707
+        z: -0.7269
+        w: 0.6867
 
